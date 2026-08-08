@@ -23,6 +23,14 @@
 
 * { box-sizing: border-box; }
 
+/* [hidden] 保底規則（見 docs/bug.md #1）：
+   瀏覽器內建樣式只靠 `[hidden] { display: none }` 這條低優先度規則生效。
+   本站大量元件（.overlay、.ceremony、.wall__grid…）自己設了 `display: flex/grid`，
+   選擇器優先度跟 `[hidden]`打平時，author stylesheet 蓋過瀏覽器預設樣式，
+   會讓 hidden 屬性整個失效、元素永遠顯示。這條規則用 !important 保證
+   hidden 永遠贏，不管其他規則怎麼設 display，全站通用、一勞永逸。 */
+[hidden] { display: none !important; }
+
 html, body {
   height: 100%;
 }

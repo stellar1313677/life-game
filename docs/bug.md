@@ -6,7 +6,7 @@
 
 ## #1　心情日誌面板打開後是空的（只有標題和「關閉」）
 
-**狀態**：已修復（2026-08-08）
+**狀態**：已修復（2026-08-08，第二次修正才真正修好，見下方「修正紀錄」）
 
 ### 症狀
 
@@ -66,6 +66,60 @@ EMPTY-STATE daylog-list innerHTML: "<p class=\"wall__empty\">還沒有紀錄。<
 - 重跑 jsdom 模擬（含 `try/catch` 修改後的版本）：零筆與有筆兩種情境皆正確渲染
 - 使用者操作面：清掉瀏覽器快取或直接關掉舊分頁重開一次 `index.html`，`?v=2` 會強制載入目前版本的 `ui.js`
 
-### 教訓
+### 教訓（第一輪，事後看是錯的診斷）
 
-本機無 build 流程的專案，「檔案存了但畫面沒變」九成是快取，先查版本號再查邏輯。以後每次改完 `src/` 底下任何檔案，記得同步把 `index.html` 裡對應的 `?v=` 往上加一碼。
+本機無 build 流程的專案，「檔案存了但畫面沒變」直覺會先懷疑快取。這個判斷方向沒錯，但**這次真正的根因跟快取無關** —— 下面「修正紀錄」是加了 `?v=2` 之後，使用者回報問題依然存在，重新調查才挖出的真正原因。cache-busting 本身沒有壞處，繼續留著，只是它不是這個 bug 的解法。
+
+---
+
+### 修正紀錄：真正的根因是 CSS，不是快取
+
+使用者照 §調查方式 的建議，開 F12 → Console 看到一則錯誤：
+
+```
+Unsafe attempt to load URL file:///D:/LearnByMe/life-game/index.html from frame
+with URL file:///D:/LearnByMe/life-game/index.html. 'file:' URLs are treated as
+unique security origins.
+```
+
+逐行檢查全部程式碼後排除是這則錯誤造成的（找不到任何會載入 `index.html` 自己的程式碼：沒有 iframe、沒有指向本機檔案的 `window.open`、唯一的 `<form>` 裡也沒有會誤觸發原生送出的按鈕），判斷這是瀏覽器 / 預覽工具的旁支雜訊，**不是**真正原因 —— 關鍵線索反而是「Console 完全沒有我程式碼丟出的紅字錯誤」，代表 JS 邏輯有跑完、沒有例外，那問題應該在畫面渲染層。
+
+請使用者切到 **Elements** 面板展開 `#daylog-list`，結果看到：
+
+```html
+<div id="daylog-panel" class="overlay" hidden>  [flex]
+```
+
+Chrome DevTools 在 `daylog-panel` 旁邊標了藍色 **`flex`** 徽章 —— 代表這個元素的**電腦運算後 `display` 值是 `flex`**，即使它明明帶著 `hidden` 屬性。這就是關鍵證據。
+
+**真正根因**：`hidden` 屬性能生效，全靠瀏覽器內建樣式表裡一條很低優先度的規則 `[hidden] { display: none; }`。本站的 `.overlay { position: fixed; ...; display: flex; ... }` 用的是 class 選擇器，跟 `[hidden]` 的屬性選擇器**優先度打平**（都是 0,1,0）。CSS cascade 規則是「優先度打平時，author stylesheet 蓋過瀏覽器預設樣式（UA stylesheet）」—— 所以我自己寫的 `.overlay{display:flex}` 贏過瀏覽器內建的 `[hidden]{display:none}`，`hidden` 屬性形同虛設。**受影響的不只是心情日誌**：`.overlay`（onboarding、mood-checkin、definition-modal、task-detail、melt-confirm、settings-panel、daylog-panel 全部共用這個 class）跟 `.ceremony`（鍛造儀式）都設了 `display: flex`，全部都中這個 bug；`.wall__grid { display: grid }`（`#section-paused` 用到）也是同一個模式。
+
+之所以「使用者走過 skip → 選心情 → 進主畫面」這段流程主觀上感覺是正常的，是因為多個 `.overlay` 元素疊在一起時，DOM 順序最後、z-index 相同的那個會蓋在最上面 —— 而 `daylog-panel` 剛好是 HTML 裡最後一個 `.overlay`，所以不管邏輯上有沒有被「打開」，它的視覺表現最顯眼、最容易被注意到是「空的」。
+
+**真正的修法**：在 `src/css/style.css` 加一條全站通用的保底規則（放在檔案最前面，`* { box-sizing: border-box; }` 之後）：
+
+```css
+[hidden] { display: none !important; }
+```
+
+用 `!important` 是刻意的、標準做法（跟 normalize.css 的處理方式一樣）—— 這樣不管未來哪個 class 設了什麼 `display` 值，`hidden` 屬性永遠贏，一次修掉全站所有現在跟未來的同類元件，不用一個一個 class 加特殊選擇器。
+
+**驗證**：用 `jsdom` 載入真實網頁後直接讀 `getComputedStyle(el).display`，逐一確認修好之前 / 之後的差異：
+
+```
+--- 修好之前（節錄）---
+daylog-panel -> hidden attr: true | computed display: flex   ← 錯，該是 none
+
+--- 修好之後 ---
+daylog-panel -> hidden attr: true  | computed display: none   ← 對
+daylog-panel -> hidden attr: false | computed display: flex   ← 打開時對
+daylog-panel -> hidden attr: true  | computed display: none   ← 關閉後對
+```
+
+（`onboarding`、`mood-checkin`、`definition-modal`、`task-detail`、`melt-confirm`、`settings-panel`、`ceremony` 也一併重新檢查過，加了保底規則後全部在 `hidden=true` 時正確算出 `display: none`。）
+
+### 教訓（更新版）
+
+1. `hidden` 屬性不是「萬用隱藏」，它只是瀏覽器內建的一條普通、低優先度 CSS 規則。任何自己寫的、對同一元素設 `display` 的 class（尤其是 `display: flex`/`grid`，因為要用它們才能同時做 flex/grid 版面又用 `hidden` 控制顯示）都可能悄悄蓋掉它。**只要專案裡有任何 modal/overlay 用 `hidden` + `display: flex` 的組合，一開始就該補 `[hidden]{display:none!important}` 這條保底規則**，不要等到出事才修。
+2. 這次真正找到根因，靠的是使用者提供的兩個具體證據：Console 錯誤（幫忙排除 JS 例外的可能）+ Elements 面板的 `computed display` 徽章（直接看到 `hidden` 沒生效）。純靠 `jsdom` 模擬 DOM 內容找不到這個 bug，因為 jsdom 不會做真的 CSS 排版計算跟 cascade —— 遇到「DOM 內容我確認是對的，但畫面看不到」這種症狀，要換成能看 computed style 的工具（真瀏覽器 DevTools，或至少能算 CSS cascade 的 headless 工具）。
+3. 第一輪診斷（快取）方向合理但是錯的，錯了就承認、留紀錄、不要為了面子硬凹成「也是原因之一」—— 對照兩輪調查過程，本身就是很好的除錯範例。
