@@ -65,6 +65,7 @@
     var fillPct = task.type === "EPIC" ? epicPercent(task) : Math.min(100, task.forge_count * 6);
     el.innerHTML =
       '<div class="card__fill" style="height:' + fillPct + '%"></div>' +
+      '<div class="card__icon"></div>' +
       '<div class="card__body">' +
         '<p class="card__skin"></p>' +
         '<h3 class="card__title"></h3>' +
@@ -72,6 +73,8 @@
       '</div>';
 
     var skin = skinOf(task);
+    var iconWrap = el.querySelector(".card__icon");
+    iconWrap.innerHTML = Data.renderSkinIcon(skin ? skin.glyph : "ore");
     el.querySelector(".card__skin").textContent = skin ? skin.name : (task.type === "LEGACY" ? "尚未鑄形" : "");
     el.querySelector(".card__title").textContent = task.title;
 

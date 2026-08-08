@@ -293,9 +293,14 @@
 
     var head = document.createElement("div");
     head.className = "task-detail__head";
+    if (task.quality_tier) head.style.setProperty("--quality-color", Data.QUALITY_META[task.quality_tier].color);
     head.innerHTML =
-      '<h3 class="task-detail__title"></h3>' +
-      '<p class="task-detail__skin"></p>';
+      '<div class="task-detail__icon"></div>' +
+      '<div>' +
+        '<h3 class="task-detail__title"></h3>' +
+        '<p class="task-detail__skin"></p>' +
+      '</div>';
+    head.querySelector(".task-detail__icon").innerHTML = Data.renderSkinIcon(skin ? skin.glyph : "ore");
     head.querySelector(".task-detail__title").textContent = task.title;
     head.querySelector(".task-detail__skin").textContent =
       (skin ? skin.name + "・" : "") + (task.tag === "URGENT" ? "緊急" : task.tag === "DAILY" ? "日常" : "") +
@@ -312,14 +317,14 @@
 
     var actions = document.createElement("div");
     actions.className = "task-detail__actions";
-    if (task.status !== "COMPLETED") {
-      var meltBtn = document.createElement("button");
-      meltBtn.type = "button";
-      meltBtn.className = "btn btn--danger-ghost";
-      meltBtn.textContent = "回爐";
-      meltBtn.addEventListener("click", function () { openMeltConfirm(task.id); });
-      actions.appendChild(meltBtn);
-    }
+    // SDD §9.2 預設不讓已完成神器回爐，但保留「或需進入設定深層才可執行」的
+    // 開放彈性——使用者測試時明確要求直接可回爐，這裡照要求開放，不另外加關卡。
+    var meltBtn = document.createElement("button");
+    meltBtn.type = "button";
+    meltBtn.className = "btn btn--danger-ghost";
+    meltBtn.textContent = "回爐";
+    meltBtn.addEventListener("click", function () { openMeltConfirm(task.id); });
+    actions.appendChild(meltBtn);
     var closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "btn btn--ghost";
@@ -499,6 +504,7 @@
     Render.renderWall();
     await Ceremony.play({
       skinName: skin ? skin.name : task.title,
+      glyph: skin ? skin.glyph : "ore",
       qualityName: task.quality,
       qualityColor: Data.QUALITY_META[task.quality_tier].color,
       traits: sortForReveal(traits)
@@ -524,6 +530,7 @@
     var skinNow = Render.skinOf(task);
     await Ceremony.play({
       skinName: skinNow ? skinNow.name : task.title,
+      glyph: skinNow ? skinNow.glyph : "ore",
       qualityName: task.quality,
       qualityColor: task.quality_tier ? Data.QUALITY_META[task.quality_tier].color : null,
       traits: revealTraits

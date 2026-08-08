@@ -163,6 +163,52 @@
     return list[Math.floor(Math.random() * list.length)];
   }
 
+  // ---- skin 圖示（程序化線稿，見 docs/bug.md #2）--------------------------
+  // 每個 glyph key 對應一組 SVG path/shape 內容（viewBox 0 0 64 64），
+  // 用 currentColor 上色，讓卡片能用品質色直接染色。目前只手繪了 MODERN
+  // 分支 10 種 glyph；XIANXIA / MAGIC 分支尚未開放，未來要開時在這裡補。
+  var GLYPH_ICONS = {
+    shotgun:
+      '<rect x="6" y="30" width="40" height="6" rx="1"/><rect x="6" y="30" width="14" height="6" rx="1" fill="currentColor" stroke="none"/>' +
+      '<path d="M46 30 L52 24 M46 36 L52 40"/><path d="M20 36 L20 46 L28 46 L28 36"/><path d="M14 46 L18 52"/>',
+    rifle:
+      '<rect x="4" y="31" width="46" height="4" rx="1"/><circle cx="14" cy="24" r="4" fill="none"/><line x1="14" y1="20" x2="14" y2="16"/>' +
+      '<path d="M50 31 L50 39" /><path d="M22 35 L22 46 L30 46 L30 35"/><path d="M16 46 L20 52"/>',
+    pistol:
+      '<rect x="16" y="26" width="30" height="8" rx="2"/><path d="M18 34 L18 48 L26 48 L26 36"/><path d="M46 30 L52 30"/>',
+    blade:
+      '<path d="M32 6 L38 40 L32 48 L26 40 Z"/><path d="M20 40 L44 40"/><path d="M32 48 L32 58"/><path d="M27 52 L37 52"/>',
+    cannon:
+      '<circle cx="24" cy="32" r="15"/><circle cx="24" cy="32" r="7"/><rect x="24" y="26" width="30" height="12" rx="2"/>' +
+      '<circle cx="18" cy="50" r="5"/><circle cx="34" cy="50" r="5"/>',
+    drone:
+      '<circle cx="32" cy="32" r="8"/><line x1="14" y1="14" x2="24" y2="24"/><line x1="50" y1="14" x2="40" y2="24"/>' +
+      '<line x1="14" y1="50" x2="24" y2="40"/><line x1="50" y1="50" x2="40" y2="40"/>' +
+      '<circle cx="14" cy="14" r="4"/><circle cx="50" cy="14" r="4"/><circle cx="14" cy="50" r="4"/><circle cx="50" cy="50" r="4"/>',
+    shield:
+      '<path d="M32 6 L54 14 V32 C54 46 44 54 32 58 C20 54 10 46 10 32 V14 Z"/><path d="M32 18 L32 42 M22 30 L42 30"/>',
+    whip:
+      '<path d="M8 54 Q20 46 16 36 Q12 26 24 24 Q36 22 30 12 Q26 6 34 6"/>',
+    gauntlet:
+      '<rect x="14" y="24" width="26" height="20" rx="4"/><line x1="20" y1="24" x2="20" y2="44"/><line x1="27" y1="24" x2="27" y2="44"/><line x1="34" y1="24" x2="34" y2="44"/>' +
+      '<path d="M40 30 L52 30 L52 38 L40 38"/>',
+    tower:
+      '<line x1="32" y1="4" x2="32" y2="20"/><circle cx="32" cy="4" r="3"/><path d="M32 20 L16 58 M32 20 L48 58 M22 40 L42 40"/>',
+    // 尚未鑄形的原礦（LEGACY 首次鍛造前的預設圖示）
+    ore:
+      '<path d="M18 44 L12 30 L22 14 L40 10 L52 22 L50 40 L36 52 L20 50 Z"/><path d="M22 14 L30 26 L18 44 M40 10 L34 28 L50 40 M30 26 L36 52"/>'
+  };
+  var GLYPH_FALLBACK = '<path d="M32 8 L52 20 V44 L32 56 L12 44 V20 Z"/><path d="M32 8 V56 M12 20 L52 44 M52 20 L12 44"/>';
+
+  function glyphMarkup(glyphKey) {
+    return GLYPH_ICONS[glyphKey] || GLYPH_FALLBACK;
+  }
+
+  function renderSkinIcon(glyphKey) {
+    return '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + glyphMarkup(glyphKey) + '</svg>';
+  }
+
   window.Data = {
     BRANCH_META: BRANCH_META,
     BRANCH_STORY: BRANCH_STORY,
@@ -180,6 +226,7 @@
     QUIET_MOODS: QUIET_MOODS,
     ANIMALS: ANIMALS,
     ANIMAL_MVP_DEFAULT: ANIMAL_MVP_DEFAULT,
-    pickRandomSkin: pickRandomSkin
+    pickRandomSkin: pickRandomSkin,
+    renderSkinIcon: renderSkinIcon
   };
 })();

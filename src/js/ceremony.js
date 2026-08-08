@@ -11,7 +11,7 @@
   function clearOverlay() {
     var overlay = document.getElementById("ceremony");
     overlay.className = "ceremony";
-    document.getElementById("ceremony-skin").textContent = "";
+    document.getElementById("ceremony-skin").innerHTML = "";
     var q = document.getElementById("ceremony-quality");
     q.hidden = true;
     q.textContent = "";
@@ -22,7 +22,7 @@
     document.getElementById("ceremony-close").hidden = true;
   }
 
-  // opts: { skinName, qualityName, qualityColor, traits: Trait[] (顯示順序，奇物須放最後) }
+  // opts: { skinName, glyph, qualityName, qualityColor, traits: Trait[] (顯示順序，奇物須放最後) }
   function play(opts) {
     return new Promise(function (resolve) {
       var overlay = document.getElementById("ceremony");
@@ -35,7 +35,8 @@
       var traitsEl = document.getElementById("ceremony-traits");
       var closeBtn = document.getElementById("ceremony-close");
 
-      skinEl.textContent = opts.skinName || "";
+      skinEl.innerHTML = Data.renderSkinIcon(opts.glyph || "ore") + '<span class="ceremony__skin-name"></span>';
+      skinEl.querySelector(".ceremony__skin-name").textContent = opts.skinName || "";
 
       (async function run() {
         overlay.classList.add("phase-dim");

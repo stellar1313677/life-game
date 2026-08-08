@@ -56,6 +56,9 @@
     }
     lastAnimalId = animal.id;
 
+    // 三層結構：wrap 負責橫越畫面的長距離位移，bob 負責短週期的
+    // 走路／游動搖擺節奏，glyph 只管透明度、大小跟面向鏡射。
+    // 三層各自獨立設 transform，不會互相干擾（見 docs/bug.md #2）。
     var wrapper = document.createElement("div");
     wrapper.className = "animal-wrap";
     var topRange = LAYER_TOP[animal.layer] || [40, 60];
@@ -67,6 +70,17 @@
     var reverse = Math.random() < 0.5;
     wrapper.classList.add(reverse ? "animal-wrap--rtl" : "animal-wrap--ltr");
 
+    var bob = document.createElement("div");
+    bob.className = "animal-bob";
+    // 體型大、移動慢的動物搖擺週期拉長、幅度加大（鯨魚緩緩起伏），
+    // 體型小、移動快的動物搖擺週期短、幅度小（狐狸/貓小碎步）。
+    var bobDur = Math.max(0.5, Math.min(1.5, animal.duration / 22));
+    var bobAmp = animal.swarm ? 3 : Math.max(3, Math.min(9, animal.widthPct / 2.2));
+    bob.style.setProperty("--bob-dur", bobDur + "s");
+    bob.style.setProperty("--bob-amp", bobAmp + "px");
+    bob.style.setProperty("--bob-tilt", (2 + Math.random() * 3) + "deg");
+    bob.style.animationDelay = "-" + (Math.random() * bobDur).toFixed(2) + "s"; // 避免每隻都同步搖擺
+
     var glyph = document.createElement("span");
     glyph.className = "animal-glyph";
     glyph.textContent = animal.swarm ? GLYPH[animal.id] + GLYPH[animal.id] + GLYPH[animal.id] : GLYPH[animal.id];
@@ -74,7 +88,8 @@
     var sizeEm = Math.max(1.1, animal.widthPct / 4);
     glyph.style.fontSize = sizeEm + "rem";
 
-    wrapper.appendChild(glyph);
+    bob.appendChild(glyph);
+    wrapper.appendChild(bob);
     layerEl.appendChild(wrapper);
 
     window.setTimeout(function () {

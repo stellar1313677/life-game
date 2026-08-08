@@ -123,3 +123,96 @@ daylog-panel -> hidden attr: true  | computed display: none   ← 關閉後對
 1. `hidden` 屬性不是「萬用隱藏」，它只是瀏覽器內建的一條普通、低優先度 CSS 規則。任何自己寫的、對同一元素設 `display` 的 class（尤其是 `display: flex`/`grid`，因為要用它們才能同時做 flex/grid 版面又用 `hidden` 控制顯示）都可能悄悄蓋掉它。**只要專案裡有任何 modal/overlay 用 `hidden` + `display: flex` 的組合，一開始就該補 `[hidden]{display:none!important}` 這條保底規則**，不要等到出事才修。
 2. 這次真正找到根因，靠的是使用者提供的兩個具體證據：Console 錯誤（幫忙排除 JS 例外的可能）+ Elements 面板的 `computed display` 徽章（直接看到 `hidden` 沒生效）。純靠 `jsdom` 模擬 DOM 內容找不到這個 bug，因為 jsdom 不會做真的 CSS 排版計算跟 cascade —— 遇到「DOM 內容我確認是對的，但畫面看不到」這種症狀，要換成能看 computed style 的工具（真瀏覽器 DevTools，或至少能算 CSS cascade 的 headless 工具）。
 3. 第一輪診斷（快取）方向合理但是錯的，錯了就承認、留紀錄、不要為了面子硬凹成「也是原因之一」—— 對照兩輪調查過程，本身就是很好的除錯範例。
+
+---
+
+## #2　神器的 skin 沒有顯示
+
+**狀態**：已修復（2026-08-08）
+
+### 症狀
+
+使用者測試時反映：卡片跟任務詳情看不出神器對應的 skin。
+
+### 調查方式
+
+用 jsdom 走一次真實流程（升格一個 EPIC 任務），直接檢查資料層：`task.skin_id`、`task.branch`、`Data.SKINS[branch]`、`Render.skinOf(task)`、卡片上 `.card__skin` 的 `textContent` —— 全部都對，`skin_id` 有正確指派、`Render.skinOf()` 找得到對應資料、卡片文字也確實寫出「霰彈槍」這種名稱。
+
+### 根因
+
+不是資料 bug，是**畫面上根本沒有畫出 skin 的圖示**。`data.js` 裡雖然每個 skin 都定義了 `glyph`（例如 `"shotgun"`、`"rifle"`），但這個欄位從頭到尾沒有任何地方拿去畫成圖案 —— 卡片只印了一行小字（skin 名稱），沒有對應的視覺符號。使用者說「沒有顯示」，講的其實是「看不到武器的樣子」，不是文字沒印出來。
+
+### 修法
+
+補上程序化 SVG 圖示系統：
+
+1. `data.js` 新增 `GLYPH_ICONS`：10 種 MODERN skin 各自對應一組簡化線稿 SVG path（`viewBox 0 0 64 64`，用 `stroke="currentColor"`，這樣圖示顏色會自動吃卡片的品質色 CSS 變數），加一個 `ore`（原礦，LEGACY 尚未鍛造時的預設圖示）跟一個通用 fallback。新增 `Data.renderSkinIcon(glyphKey)` 回傳完整 `<svg>` 字串。
+2. 三個顯示 skin 的地方都補上圖示：
+   - `render.js` 的卡片：新增 `.card__icon` 區塊，疊在卡片上方置中
+   - `ui.js` 的任務詳情面板標題：新增 `.task-detail__icon`，跟標題並排
+   - `ceremony.js` 的鍛造儀式：`#ceremony-skin` 從純文字改成圖示 + 名稱直排
+3. 對應補上 CSS（`.card__icon`、`.task-detail__icon`、`.ceremony__skin svg` 等）
+
+仙俠 / 魔法分支的 glyph（`staff`、`bow`、`gourd`…）還沒畫，目前會落到 fallback 圖示；等那兩個分支開放時要記得補。
+
+### 驗證
+
+用 jsdom 走「升格為 EPIC」全流程，確認：卡片內確實有 `<svg>` 且含 4 個以上繪圖路徑元素；任務詳情面板的 head 區塊也確實有 `<svg>`。
+
+---
+
+## #3　背景動物沒有走路動畫，平移移動很怪異
+
+**狀態**：已修復（2026-08-08）
+
+### 症狀
+
+使用者反映動物移動看起來不自然。
+
+### 調查與根因
+
+原本的實作只有一層：`.animal-wrap` 用 `linear` timing 的 `translateX` 讓動物從畫面一側滑到另一側，全程完全筆直、等速、沒有任何上下起伏 —— 對走路（狐狸、貓）、游動（錦鯉、鯨魚）、飛行（貓頭鷹、螢火蟲）這些本來就該有節奏感的動物來說，看起來就是「一個 emoji 貼著尺規平移」，這就是使用者說的「沒有走路動畫」。
+
+另外複查了 `.animal-wrap--rtl` 舊寫法（`transform: translateX(15vw) scaleX(-1)`，同時把位移跟鏡射寫在同一個 `transform` 屬性裡），數學上重新推導後其實對「元素中心點的最終位置」沒有影響（`scaleX` 對稱於中心，不影響位移量），但這種寫法很容易在未來改動時因為兩種效果耦合在同一行而出錯，所以這次也一併拆開，不留隱患。
+
+### 修法
+
+改成三層結構，每層只管一件事：
+
+```
+.animal-wrap   —— 橫越畫面的長距離位移（原本就有，維持 linear）
+  .animal-bob  —— 短週期上下搖擺 + 輕微傾斜，infinite 循環，模擬走路/游動節奏（新增）
+    .animal-glyph —— 只管大小、透明度、面向鏡射（scaleX(-1) 移到這層，獨立於位移計算）
+```
+
+`.animal-bob` 的搖擺幅度跟週期由 JS 依動物體型動態決定（`animals.js`）：體型大、移動慢的動物（鯨魚）搖擺週期長、幅度大；體型小、移動快的動物（狐狸、貓）搖擺週期短、幅度小。每隻動物出場時額外給搖擺動畫一個隨機負的 `animation-delay`，避免所有同時在場的動物（雖然規則是最多同時 1 隻，但保留這個保險）步調完全同步、看起來像複製貼上。
+
+`.animal-wrap--rtl` 的位移 keyframe 也順手簡化：不再用 `right:0` 覆蓋基準點，兩個方向都用同一套 `left:0` 基準，只是 `translateX` 的起訖值相反，邏輯更直觀好維護。
+
+### 驗證
+
+- CSS/JS 語法檢查、大括號平衡皆過
+- 靜態確認新的 `@keyframes animal-bob`、`.animal-bob` 規則、`.animal-wrap--rtl .animal-glyph` 規則都有正確寫入 `style.css`，舊的 `right:0` 覆蓋寫法確認已移除
+- 動物出場排程本身有 8–30 秒的隨機初始延遲，非同步時間相關的視覺效果無法用 jsdom 快速斷言，這部分請使用者實際用瀏覽器看一次確認節奏是否自然
+
+---
+
+## #4　已完成的神器也要能回爐
+
+**狀態**：已依需求開放（2026-08-08，非缺陷，是規格調整）
+
+### 背景
+
+SDD §9.2 原規則：已完成神器（COMPLETED）預設不開放回爐，理由是「完成品是資產，不該有隨手刪的入口」，但文件本身也留了退路：「或需進入設定深層才可執行」。
+
+### 使用者需求
+
+實際測試時會想要把已經鑄成的神器直接回爐（測試資料清理很常見的需求），不想要多一層設定深層的關卡。
+
+### 處理方式
+
+這不是 bug，是使用者對 SDD 預設值的明確覆寫決定，尊重並直接實作：`ui.js` 的任務詳情面板拿掉「`status !== "COMPLETED"` 才顯示回爐按鈕」的限制，COMPLETED 的 EPIC 現在跟其他狀態一樣，任務詳情面板裡永遠有「回爐」按鈕，用同一套 §9.3 的確認文案（「回爐重來。這把就不留了。」），沒有另外加確認理由或警語。
+
+### 驗證
+
+用 jsdom 手動把一個任務的狀態設為 `COMPLETED` 後重新開啟任務詳情，確認「回爐」按鈕存在。
