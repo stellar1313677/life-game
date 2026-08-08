@@ -623,22 +623,29 @@
   function wireDaylog() {
     document.getElementById("open-daylog").addEventListener("click", function () {
       var wrap = document.getElementById("daylog-list");
-      wrap.innerHTML = "";
-      var logs = State.data.dayLogs.slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });
-      if (logs.length === 0) {
-        wrap.innerHTML = '<p class="wall__empty">還沒有紀錄。</p>';
+      // 防禦性 try/catch：任何一筆紀錄格式異常都不該讓整個列表開天窗，
+      // 至少要有東西可看（見 docs/bug.md 的空白面板事故）。
+      try {
+        wrap.innerHTML = "";
+        var logs = (State.data.dayLogs || []).slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });
+        if (logs.length === 0) {
+          wrap.innerHTML = '<p class="wall__empty">還沒有紀錄。</p>';
+        }
+        logs.forEach(function (l) {
+          var meta = Data.MOOD_META[l.mood_tag] || {};
+          var row = document.createElement("div");
+          row.className = "daylog-row";
+          row.style.borderColor = moodColor(l.mood_tag);
+          row.innerHTML = '<span class="daylog-row__date"></span><span class="daylog-row__mood"></span><p class="daylog-row__text"></p>';
+          row.querySelector(".daylog-row__date").textContent = l.date;
+          row.querySelector(".daylog-row__mood").textContent = (meta.emoji || "") + " " + (meta.label || "");
+          row.querySelector(".daylog-row__text").textContent = l.free_text || "";
+          wrap.appendChild(row);
+        });
+      } catch (err) {
+        console.error("鐵匠鋪：心情日誌渲染失敗", err);
+        wrap.innerHTML = '<p class="wall__empty">日誌讀取失敗，重新整理頁面再試一次。</p>';
       }
-      logs.forEach(function (l) {
-        var meta = Data.MOOD_META[l.mood_tag] || {};
-        var row = document.createElement("div");
-        row.className = "daylog-row";
-        row.style.borderColor = moodColor(l.mood_tag);
-        row.innerHTML = '<span class="daylog-row__date"></span><span class="daylog-row__mood"></span><p class="daylog-row__text"></p>';
-        row.querySelector(".daylog-row__date").textContent = l.date;
-        row.querySelector(".daylog-row__mood").textContent = (meta.emoji || "") + " " + (meta.label || "");
-        row.querySelector(".daylog-row__text").textContent = l.free_text || "";
-        wrap.appendChild(row);
-      });
       document.getElementById("daylog-panel").hidden = false;
     });
     document.getElementById("daylog-close").addEventListener("click", function () {
