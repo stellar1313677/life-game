@@ -552,7 +552,8 @@ body.ceremony-active .animal-layer {
 /* 三層結構，各自只管一件事，避免同一個 transform 疊加多種效果互相干擾：
    .animal-wrap（橫越畫面的長距離位移）
      > .animal-bob（走路／游動的短週期上下搖擺，infinite）
-         > .animal-glyph（大小、透明度、面向鏡射） */
+         > .animal-glyph（透明度容器，可裝 1 個或 3 個 icon）
+             > .animal-frame（實際的 SVG 剪影，JS 每隔一段時間換幀，見 animals.js） */
 .animal-wrap {
   position: absolute;
   left: 0;
@@ -561,8 +562,10 @@ body.ceremony-active .animal-layer {
 .animal-bob {
   animation: animal-bob var(--bob-dur, 0.9s) ease-in-out infinite;
 }
-.animal-glyph { display: inline-block; filter: saturate(0.7); }
-.animal-wrap--rtl .animal-glyph { transform: scaleX(-1); }
+.animal-glyph { display: flex; align-items: center; }
+.animal-frame { display: inline-block; color: var(--forge-ash); filter: saturate(0.7); }
+.animal-frame svg { width: 100%; height: 100%; display: block; }
+.animal-wrap--rtl .animal-frame { transform: scaleX(-1); }
 
 .animal-wrap--ltr { animation: animal-move-ltr var(--duration, 30s) linear forwards; }
 .animal-wrap--rtl { animation: animal-move-rtl var(--duration, 30s) linear forwards; }

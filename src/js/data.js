@@ -142,17 +142,19 @@
 
   // ---- §11 背景動物 ------------------------------------------------------
 
+  // motion 決定套用哪一組走路/游動幀圖（見 docs/animalsbug.md #2）：
+  // walk=四足走路（前後腳互換）、fly=振翅、swim=尾鰭擺動、crawl=蝸牛型爬行、flicker=螢火蟲明滅
   var ANIMALS = [
-    { id: "WHALE", label: "鯨魚", layer: "far", widthPct: 22, opacity: 0.10, duration: 25, quiet: true },
-    { id: "DEER", label: "鹿", layer: "far", widthPct: 8, opacity: 0.12, duration: 40, quiet: true },
-    { id: "PAPER_CRANE", label: "紙鶴", layer: "mid-far", widthPct: 5, opacity: 0.15, duration: 15, quiet: false },
-    { id: "FIREFLY", label: "螢火蟲群", layer: "mid", widthPct: 0.4, opacity: 0.18, duration: 30, quiet: true, swarm: true },
-    { id: "FOX", label: "狐狸", layer: "mid", widthPct: 10, opacity: 0.15, duration: 12, quiet: false },
-    { id: "CAT", label: "貓", layer: "mid-near", widthPct: 13, opacity: 0.15, duration: 20, quiet: false },
-    { id: "OWL", label: "貓頭鷹", layer: "mid-near", widthPct: 11, opacity: 0.15, duration: 35, quiet: true },
-    { id: "KOI", label: "錦鯉", layer: "near", widthPct: 15, opacity: 0.12, duration: 18, quiet: false },
-    { id: "TURTLE", label: "烏龜", layer: "near", widthPct: 9, opacity: 0.15, duration: 30, quiet: false },
-    { id: "SNAIL", label: "蝸牛", layer: "extreme-near", widthPct: 6, opacity: 0.20, duration: 40, quiet: true }
+    { id: "WHALE", label: "鯨魚", layer: "far", widthPct: 22, opacity: 0.10, duration: 25, quiet: true, motion: "swim" },
+    { id: "DEER", label: "鹿", layer: "far", widthPct: 8, opacity: 0.12, duration: 40, quiet: true, motion: "walk" },
+    { id: "PAPER_CRANE", label: "紙鶴", layer: "mid-far", widthPct: 5, opacity: 0.15, duration: 15, quiet: false, motion: "fly" },
+    { id: "FIREFLY", label: "螢火蟲群", layer: "mid", widthPct: 0.4, opacity: 0.18, duration: 30, quiet: true, swarm: true, motion: "flicker" },
+    { id: "FOX", label: "狐狸", layer: "mid", widthPct: 10, opacity: 0.15, duration: 12, quiet: false, motion: "walk" },
+    { id: "CAT", label: "貓", layer: "mid-near", widthPct: 13, opacity: 0.15, duration: 20, quiet: false, motion: "walk" },
+    { id: "OWL", label: "貓頭鷹", layer: "mid-near", widthPct: 11, opacity: 0.15, duration: 35, quiet: true, motion: "fly" },
+    { id: "KOI", label: "錦鯉", layer: "near", widthPct: 15, opacity: 0.12, duration: 18, quiet: false, motion: "swim" },
+    { id: "TURTLE", label: "烏龜", layer: "near", widthPct: 9, opacity: 0.15, duration: 30, quiet: false, motion: "walk" },
+    { id: "SNAIL", label: "蝸牛", layer: "extreme-near", widthPct: 6, opacity: 0.20, duration: 40, quiet: true, motion: "crawl" }
   ];
   var ANIMAL_MVP_DEFAULT = ["WHALE", "CAT", "FIREFLY"]; // §15.2 MVP 動物
 
@@ -212,6 +214,66 @@
       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + glyphMarkup(glyphKey) + '</svg>';
   }
 
+  // ---- 動物走路/游動幀圖（見 docs/animalsbug.md #2）------------------------
+  // 每個 motion 對應 2 幀側面線稿剪影（viewBox 0 0 100 50，currentColor 上色）。
+  // 共用身體輪廓，只有腳／翅膀／尾鰭那幾筆在兩幀之間換位置，JS 端用
+  // setInterval 交替切換，做出真正「兩張圖互相切換」的走路/游動感，
+  // 不是單張圖片靠 CSS 緩動硬撐。
+  var ANIMAL_FRAMES = {
+    walk: [
+      // frame A：前腳前伸、後腳後蹬
+      '<path d="M20 30 Q15 18 30 15 L65 15 Q80 15 82 26 Q83 32 72 34 L28 34 Q18 34 20 30 Z"/>' +
+      '<circle cx="80" cy="18" r="8"/><path d="M77 11 L80 4 L84 11"/><path d="M18 22 Q6 14 10 26"/>' +
+      '<path d="M62 33 L66 46"/><path d="M32 33 L26 46"/>',
+      // frame B：前後腳互換
+      '<path d="M20 30 Q15 18 30 15 L65 15 Q80 15 82 26 Q83 32 72 34 L28 34 Q18 34 20 30 Z"/>' +
+      '<circle cx="80" cy="18" r="8"/><path d="M77 11 L80 4 L84 11"/><path d="M18 22 Q6 14 10 26"/>' +
+      '<path d="M62 33 L58 46"/><path d="M32 33 L38 46"/>'
+    ],
+    fly: [
+      // frame A：翅膀上揚
+      '<ellipse cx="45" cy="28" rx="22" ry="10"/><circle cx="70" cy="20" r="7"/><path d="M77 20 L84 18"/>' +
+      '<path d="M23 25 L8 18 M23 31 L8 34"/><path d="M40 22 Q30 2 55 10 Q45 16 40 22 Z"/>',
+      // frame B：翅膀下壓
+      '<ellipse cx="45" cy="28" rx="22" ry="10"/><circle cx="70" cy="20" r="7"/><path d="M77 20 L84 18"/>' +
+      '<path d="M23 25 L8 18 M23 31 L8 34"/><path d="M40 30 Q30 48 55 42 Q45 36 40 30 Z"/>'
+    ],
+    swim: [
+      // frame A：尾鰭上擺
+      '<path d="M10 25 Q20 10 50 12 Q75 13 80 25 Q75 37 50 38 Q20 40 10 25 Z"/>' +
+      '<circle cx="65" cy="20" r="2" fill="currentColor" stroke="none"/><path d="M45 12 L50 2 L55 13"/>' +
+      '<path d="M10 25 L0 10 L4 25 L0 40 Z"/>',
+      // frame B：尾鰭下擺
+      '<path d="M10 25 Q20 10 50 12 Q75 13 80 25 Q75 37 50 38 Q20 40 10 25 Z"/>' +
+      '<circle cx="65" cy="20" r="2" fill="currentColor" stroke="none"/><path d="M45 12 L50 2 L55 13"/>' +
+      '<path d="M10 25 L2 38 L6 25 L2 12 Z"/>'
+    ],
+    crawl: [
+      // frame A：觸角舉高
+      '<path d="M35 22 m-16 0 a16 16 0 1 1 32 0 a10 10 0 1 1 -20 0 a5 5 0 1 1 10 0"/>' +
+      '<path d="M19 34 Q10 30 8 36 Q20 44 55 40 Q65 38 70 30 Q60 24 50 30"/>' +
+      '<path d="M62 26 L72 14 M56 28 L64 18"/>',
+      // frame B：觸角放低
+      '<path d="M35 22 m-16 0 a16 16 0 1 1 32 0 a10 10 0 1 1 -20 0 a5 5 0 1 1 10 0"/>' +
+      '<path d="M19 34 Q10 30 8 36 Q20 44 55 40 Q65 38 70 30 Q60 24 50 30"/>' +
+      '<path d="M62 26 L70 18 M56 28 L62 22"/>'
+    ],
+    flicker: [
+      // frame A：暗
+      '<circle cx="50" cy="25" r="4" fill="currentColor" stroke="none" opacity="0.5"/>',
+      // frame B：亮（帶光暈）
+      '<circle cx="50" cy="25" r="5" fill="currentColor" stroke="none"/>' +
+      '<circle cx="50" cy="25" r="11" fill="currentColor" stroke="none" opacity="0.25"/>'
+    ]
+  };
+
+  function renderAnimalFrame(motion, frameIndex) {
+    var frames = ANIMAL_FRAMES[motion] || ANIMAL_FRAMES.walk;
+    var content = frames[frameIndex % frames.length];
+    return '<svg viewBox="0 0 100 50" fill="none" stroke="currentColor" stroke-width="3" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + content + '</svg>';
+  }
+
   window.Data = {
     BRANCH_META: BRANCH_META,
     BRANCH_STORY: BRANCH_STORY,
@@ -230,6 +292,7 @@
     ANIMALS: ANIMALS,
     ANIMAL_MVP_DEFAULT: ANIMAL_MVP_DEFAULT,
     pickRandomSkin: pickRandomSkin,
-    renderSkinIcon: renderSkinIcon
+    renderSkinIcon: renderSkinIcon,
+    renderAnimalFrame: renderAnimalFrame
   };
 })();

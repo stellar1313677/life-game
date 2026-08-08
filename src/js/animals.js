@@ -5,11 +5,6 @@
 (function () {
   "use strict";
 
-  var GLYPH = {
-    WHALE: "🐋", DEER: "🦌", PAPER_CRANE: "🕊️", FIREFLY: "✨", FOX: "🦊",
-    CAT: "🐈", OWL: "🦉", KOI: "🐟", TURTLE: "🐢", SNAIL: "🐌"
-  };
-
   var LAYER_TOP = {
     far: [8, 22], "mid-far": [22, 34], mid: [38, 58],
     "mid-near": [52, 68], near: [68, 82], "extreme-near": [82, 92]
@@ -48,6 +43,35 @@
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  // 兩幀（見 Data.ANIMAL_FRAMES）真的互相切換，不是靠 CSS 緩動硬撐出走路感
+  // （見 docs/animalsbug.md #2）。換幀速度跟 bob 搖擺週期同步：走路/游動類
+  // 每半個搖擺週期換一幀，螢火蟲用不規則間隔模擬自然明滅。回傳 stop() 讓
+  // 呼叫端在動物離場時清掉 timer，避免殘留的 setTimeout 持續執行。
+  function makeFrameIcon(animal, widthRem) {
+    var icon = document.createElement("span");
+    icon.className = "animal-frame";
+    icon.style.width = widthRem + "rem";
+    icon.style.height = (widthRem / 2) + "rem";
+    var frame = 0;
+    icon.innerHTML = Data.renderAnimalFrame(animal.motion, frame);
+
+    var isFlicker = animal.motion === "flicker";
+    var swapMs = isFlicker ? rand(260, 520) : Math.max(140, Math.min(650, (animal.duration / 22) * 500));
+    var timerId = window.setTimeout(swap, Math.random() * swapMs); // 隨機起始相位，避免同步
+
+    function swap() {
+      frame = 1 - frame;
+      icon.innerHTML = Data.renderAnimalFrame(animal.motion, frame);
+      timerId = window.setTimeout(swap, isFlicker ? rand(260, 520) : swapMs);
+    }
+
+    return { el: icon, stop: function () { window.clearTimeout(timerId); } };
+  }
+
   function spawnOne() {
     var animal = pickAnimal();
     if (!animal || !layerEl) {
@@ -57,7 +81,7 @@
     lastAnimalId = animal.id;
 
     // 三層結構：wrap 負責橫越畫面的長距離位移，bob 負責短週期的
-    // 走路／游動搖擺節奏，glyph 只管透明度、大小跟面向鏡射。
+    // 走路／游動搖擺節奏，glyph 裝的 icon 負責兩幀交替跟面向鏡射。
     // 三層各自獨立設 transform，不會互相干擾（見 docs/animalsbug.md #1）。
     var wrapper = document.createElement("div");
     wrapper.className = "animal-wrap";
@@ -83,25 +107,36 @@
 
     var glyph = document.createElement("span");
     glyph.className = "animal-glyph";
-    glyph.textContent = animal.swarm ? GLYPH[animal.id] + GLYPH[animal.id] + GLYPH[animal.id] : GLYPH[animal.id];
     glyph.style.opacity = animal.opacity;
-    var sizeEm = Math.max(1.1, animal.widthPct / 4);
-    glyph.style.fontSize = sizeEm + "rem";
+
+    var stoppers = [];
+    if (animal.swarm) {
+      // 螢火蟲群：3 個各自獨立明滅的小光點，散開排列
+      for (var i = 0; i < 3; i++) {
+        var dot = makeFrameIcon(animal, 0.9);
+        dot.el.style.marginLeft = i === 0 ? "0" : rand(0.3, 1.1) + "rem";
+        dot.el.style.marginTop = rand(-0.5, 0.5) + "rem";
+        glyph.appendChild(dot.el);
+        stoppers.push(dot.stop);
+      }
+    } else {
+      var widthRem = Math.max(2.2, animal.widthPct / 2);
+      var icon = makeFrameIcon(animal, widthRem);
+      glyph.appendChild(icon.el);
+      stoppers.push(icon.stop);
+    }
 
     bob.appendChild(glyph);
     wrapper.appendChild(bob);
     layerEl.appendChild(wrapper);
 
     window.setTimeout(function () {
+      stoppers.forEach(function (stop) { stop(); });
       wrapper.remove();
       var mood = State.currentMood();
       var gap = mood && Data.QUIET_MOODS[mood] ? rand(180, 300) : rand(60, 180);
       scheduleNext(gap);
     }, duration * 1000);
-  }
-
-  function rand(min, max) {
-    return min + Math.random() * (max - min);
   }
 
   function scheduleNext(seconds) {
