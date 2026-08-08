@@ -58,7 +58,7 @@
 
     // 三層結構：wrap 負責橫越畫面的長距離位移，bob 負責短週期的
     // 走路／游動搖擺節奏，glyph 只管透明度、大小跟面向鏡射。
-    // 三層各自獨立設 transform，不會互相干擾（見 docs/bug.md #2）。
+    // 三層各自獨立設 transform，不會互相干擾（見 docs/animalsbug.md #1）。
     var wrapper = document.createElement("div");
     wrapper.className = "animal-wrap";
     var topRange = LAYER_TOP[animal.layer] || [40, 60];

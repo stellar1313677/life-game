@@ -631,7 +631,7 @@
     document.getElementById("open-daylog").addEventListener("click", function () {
       var wrap = document.getElementById("daylog-list");
       // 防禦性 try/catch：任何一筆紀錄格式異常都不該讓整個列表開天窗，
-      // 至少要有東西可看（見 docs/bug.md 的空白面板事故）。
+      // 至少要有東西可看（見 docs/appearancebug.md #1 的空白面板事故）。
       try {
         wrap.innerHTML = "";
         var logs = (State.data.dayLogs || []).slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });

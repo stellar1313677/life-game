@@ -18,12 +18,13 @@
   --q3: #60A5FA; /* 秘銀 */
   --q4: #A78BFA; /* 符文 */
   --q5: #FBBF24; /* 傳說 */
-  --curio: #C7CDD6;
+  /* 奇物詞條改成彩色漸層後不再用單一 --curio 變數上色，
+     漸層色票直接寫在 .trait-chip--curio 規則裡（見下方）。 */
 }
 
 * { box-sizing: border-box; }
 
-/* [hidden] 保底規則（見 docs/bug.md #1）：
+/* [hidden] 保底規則（見 docs/appearancebug.md #1）：
    瀏覽器內建樣式只靠 `[hidden] { display: none }` 這條低優先度規則生效。
    本站大量元件（.overlay、.ceremony、.wall__grid…）自己設了 `display: flex/grid`，
    選擇器優先度跟 `[hidden]`打平時，author stylesheet 蓋過瀏覽器預設樣式，
@@ -311,10 +312,21 @@ input[type="range"] { width: 100%; accent-color: var(--forge-ember); }
   padding: 0.15em 0.6em;
   color: var(--forge-ash);
 }
+/* 奇物詞條：彩色（真正的多色流動漸層，不是單一顏色），
+   刻意跟 tier1-5 的任何品質色都不同，一眼就能看出「這條不參與品質計算」。 */
 .trait-chip--curio {
-  color: var(--curio);
-  border-color: var(--curio);
-  background: linear-gradient(90deg, rgba(199,205,214,0.15), rgba(255,255,255,0.05), rgba(199,205,214,0.15));
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-image: linear-gradient(90deg, #ff6b6b, #ffc857, #6ee7a8, #5ec8f2, #b18cf0, #ff6b6b) 1;
+  background: linear-gradient(90deg, #ff6b6b, #ffc857, #6ee7a8, #5ec8f2, #b18cf0, #ff6b6b);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: curio-flow 5s linear infinite;
+}
+@keyframes curio-flow {
+  to { background-position: 200% 0; }
 }
 
 /* ---- 捕捉層（§6.1） ----------------------------------------------------- */

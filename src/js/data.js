@@ -96,6 +96,9 @@
     4: { name: "符文", color: "#A78BFA", effect: "flow-rune" },
     5: { name: "傳說", color: "#FBBF24", effect: "legendary" }
   };
+  // 奇物詞條是彩色流動漸層，不是單一顏色，實際色票直接寫在
+  // style.css 的 .trait-chip--curio；這裡的 color 只留給非 CSS 情境
+  // （例如純文字輸出）當備用色，不代表真正的視覺效果。
   var CURIO_META = { name: "奇物", color: "#C7CDD6" };
 
   // ---- §7.5 EPIC 詞條數量與 tier 抽取權重 -------------------------------
@@ -163,7 +166,7 @@
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  // ---- skin 圖示（程序化線稿，見 docs/bug.md #2）--------------------------
+  // ---- skin 圖示（程序化線稿，見 docs/appearancebug.md #2）--------------------------
   // 每個 glyph key 對應一組 SVG path/shape 內容（viewBox 0 0 64 64），
   // 用 currentColor 上色，讓卡片能用品質色直接染色。目前只手繪了 MODERN
   // 分支 10 種 glyph；XIANXIA / MAGIC 分支尚未開放，未來要開時在這裡補。
