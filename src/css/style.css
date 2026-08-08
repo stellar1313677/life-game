@@ -1,30 +1,539 @@
+/* 鐵匠鋪 — 樣式
+   對應 docs/sdd-v2.md 全篇視覺規格。深色鍛造主題，品質色即詞條顏色，
+   任何進度／連續天數／百分比文字皆不得出現（見 §14、§16）。 */
+
 :root {
   --forge-black: #14100d;
+  --forge-panel: #1d1712;
+  --forge-panel-2: #241c15;
   --forge-ember: #d97b3f;
+  --forge-ember-bright: #f0a06a;
   --forge-ash: #a89f94;
+  --forge-ash-dim: #6f6860;
+  --forge-line: #352a1f;
+  --danger: #e0685a;
+
+  --q1: #9CA3AF; /* 凡鐵 */
+  --q2: #4ADE80; /* 精鋼 */
+  --q3: #60A5FA; /* 秘銀 */
+  --q4: #A78BFA; /* 符文 */
+  --q5: #FBBF24; /* 傳說 */
+  --curio: #C7CDD6;
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  background: radial-gradient(ellipse at 50% -10%, #26190f 0%, var(--forge-black) 60%);
+  color: var(--forge-ash);
+  font-family: "PingFang TC", "Microsoft JhengHei", system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  transition: background 1.2s ease;
+}
+
+button, input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ---- 心情主題色溫（§5.2） ------------------------------------------- */
+
+body.mood-cold { background: radial-gradient(ellipse at 50% -10%, #17222b 0%, #10151a 60%); }
+body.mood-warm { background: radial-gradient(ellipse at 50% -10%, #2b1f10 0%, #17120c 60%); }
+body.mood-ember { background: radial-gradient(ellipse at 50% -10%, #200f08 0%, #120a06 60%); }
+body.mood-bright { background: radial-gradient(ellipse at 50% -15%, #33200e 0%, #180f08 60%); }
+body.mood-gray { background: radial-gradient(ellipse at 50% -10%, #1b1b1b 0%, #101010 60%); filter: saturate(0.6); }
+
+/* ---- 通用元件 ---------------------------------------------------------- */
+
+.btn {
+  border: 1px solid var(--forge-line);
+  background: var(--forge-panel-2);
+  color: var(--forge-ash);
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.1s;
+}
+.btn:hover { border-color: var(--forge-ember); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn--primary { background: var(--forge-ember); border-color: var(--forge-ember); color: #1a1108; font-weight: 600; }
+.btn--primary:hover { background: var(--forge-ember-bright); }
+.btn--ghost { background: transparent; }
+.btn--danger { background: var(--danger); border-color: var(--danger); color: #2a0d09; font-weight: 600; }
+.btn--danger-ghost { background: transparent; border-color: var(--danger); color: var(--danger); }
+.btn--small { padding: 0.35em 0.8em; font-size: 0.85rem; }
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.3em 0.5em;
+  border-radius: 8px;
+  line-height: 1;
+}
+.icon-btn:hover { background: rgba(217,123,63,0.15); }
+
+.field { margin-bottom: 1.1rem; }
+.field__label { display: block; font-size: 0.85rem; color: var(--forge-ash-dim); margin-bottom: 0.4em; }
+.field__hint { font-size: 0.8rem; color: var(--forge-ash-dim); margin: 0.3em 0 0; min-height: 1.2em; }
+
+.segmented { display: flex; gap: 0.5em; flex-wrap: wrap; }
+.segmented__opt {
+  border: 1px solid var(--forge-line);
+  background: var(--forge-panel-2);
+  color: var(--forge-ash);
+  border-radius: 999px;
+  padding: 0.45em 1em;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.segmented__opt--active { border-color: var(--forge-ember); background: rgba(217,123,63,0.18); color: var(--forge-ember-bright); }
+
+input[type="text"], input[type="number"], textarea {
+  width: 100%;
+  background: var(--forge-black);
+  border: 1px solid var(--forge-line);
+  border-radius: 8px;
+  padding: 0.6em 0.8em;
+  font-size: 0.95rem;
+}
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+  outline: none;
+  border-color: var(--forge-ember);
+}
+input[type="range"] { width: 100%; accent-color: var(--forge-ember); }
+
+/* ---- 覆蓋層基底 --------------------------------------------------------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 7, 5, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--forge-black);
-  color: var(--forge-ash);
-  font-family: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  z-index: 40;
+  padding: 1.5rem;
+  backdrop-filter: blur(2px);
 }
 
-.entry {
+.overlay__panel {
+  background: var(--forge-panel);
+  border: 1px solid var(--forge-line);
+  border-radius: 16px;
+  padding: 1.8rem;
+  max-width: 480px;
+  width: 100%;
+  max-height: 86vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* ---- 首次啟動：分支選擇 + 開場故事 -------------------------------------- */
+
+.onboarding__panel { max-width: 560px; text-align: center; }
+
+.branch-grid { display: grid; gap: 0.9rem; margin-bottom: 1rem; }
+
+.branch-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  padding: 1.1em;
+  border-radius: 12px;
+  border: 1px solid var(--forge-line);
+  background: var(--forge-panel-2);
+  cursor: pointer;
+  color: var(--forge-ash);
+}
+.branch-card:hover:not(.branch-card--locked) { border-color: var(--forge-ember); }
+.branch-card--locked { opacity: 0.4; cursor: not-allowed; }
+.branch-card__label { font-size: 1.05rem; font-weight: 600; }
+.branch-card__note { font-size: 0.8rem; color: var(--forge-ash-dim); }
+
+.onboarding-story__text p { line-height: 1.9; margin: 0 0 0.9em; text-align: left; }
+.onboarding-story__hint { font-size: 0.82rem; color: var(--forge-ash-dim); margin-bottom: 1.2em; }
+
+.onboarding__skip {
+  position: absolute;
+  bottom: 1.2rem;
+  right: 1.4rem;
+}
+.overlay--onboarding .overlay__panel { position: relative; }
+
+/* ---- 心情簽到 ------------------------------------------------------------ */
+
+.mood-panel { text-align: center; }
+.mood-panel__question { font-size: 1.2rem; margin: 0 0 1.2rem; }
+
+.mood-tags { display: flex; flex-wrap: wrap; gap: 0.6em; justify-content: center; margin-bottom: 1rem; }
+.mood-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  border: 1px solid var(--forge-line);
+  background: var(--forge-panel-2);
+  color: var(--forge-ash);
+  border-radius: 999px;
+  padding: 0.6em 1.1em;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.mood-tag:hover { border-color: var(--forge-ember); }
+.mood-tag__emoji { font-size: 1.1rem; }
+
+.mood-panel__text { resize: none; margin-bottom: 0.8rem; }
+.mood-panel__response { min-height: 1.4em; color: var(--forge-ember-bright); font-size: 0.95rem; }
+
+/* ---- 主畫面 -------------------------------------------------------------- */
+
+.app-root { position: relative; z-index: 1; padding-bottom: 6rem; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.6rem;
+  position: relative;
+}
+.topbar__title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  letter-spacing: 0.15em;
+  color: var(--forge-ember);
+  font-size: 1.1rem;
+}
+.topbar__branch {
+  background: transparent;
+  border: 1px solid var(--forge-line);
+  border-radius: 999px;
+  color: var(--forge-ash-dim);
+  padding: 0.3em 0.9em;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.topbar__actions { display: flex; gap: 0.3em; }
+
+/* ---- 展覽牆（§10） -------------------------------------------------------- */
+
+.wall { max-width: 1080px; margin: 0 auto; padding: 0 1.6rem; }
+.wall__section { margin-bottom: 2.2rem; }
+.wall__heading {
+  font-size: 0.95rem;
+  color: var(--forge-ash-dim);
+  letter-spacing: 0.08em;
+  margin: 0 0 0.9rem;
+  font-weight: 500;
+}
+.wall__heading--toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.wall__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 1rem;
+}
+.wall__grid--active { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.wall__empty { color: var(--forge-ash-dim); font-size: 0.9rem; padding: 1rem 0; }
+.wall__show-more { grid-column: 1 / -1; }
+.wall__section--paused .wall__grid .card { opacity: 0.75; }
+
+/* ---- 卡片 ------------------------------------------------------------------ */
+
+.card {
+  position: relative;
+  border: 1px solid var(--quality-color, var(--forge-line));
+  border-radius: 12px;
+  background: var(--forge-panel-2);
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  transition: transform 0.15s;
+}
+.card:hover { transform: translateY(-2px); }
+.card__fill {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--quality-color, var(--forge-ember)) 35%, transparent));
+  transition: height 0.4s ease;
+}
+.card__body { position: relative; z-index: 1; padding: 0.9rem; width: 100%; }
+.card__skin { font-size: 0.72rem; color: var(--forge-ash-dim); margin: 0 0 0.2em; }
+.card__title { font-size: 0.98rem; margin: 0 0 0.3em; color: #f2ece4; }
+.card__meta { font-size: 0.8rem; color: var(--forge-ash); margin: 0; }
+.card__traits { display: flex; flex-wrap: wrap; gap: 0.3em; margin-top: 0.5em; }
+.card--paused { filter: grayscale(0.15); }
+
+.trait-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  border: 1px solid var(--forge-line);
+  border-radius: 999px;
+  padding: 0.15em 0.6em;
+  color: var(--forge-ash);
+}
+.trait-chip--curio {
+  color: var(--curio);
+  border-color: var(--curio);
+  background: linear-gradient(90deg, rgba(199,205,214,0.15), rgba(255,255,255,0.05), rgba(199,205,214,0.15));
+}
+
+/* ---- 捕捉層（§6.1） ----------------------------------------------------- */
+
+.capture-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  gap: 0.6em;
+  padding: 0.9rem 1.4rem;
+  background: linear-gradient(0deg, var(--forge-black) 40%, transparent);
+  z-index: 20;
+}
+.capture-bar__toggle {
+  border: 1px solid var(--forge-line);
+  background: var(--forge-panel);
+  color: var(--forge-ash-dim);
+  border-radius: 8px;
+  padding: 0 1em;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.capture-bar__form { flex: 1; }
+.capture-bar__input {
+  width: 100%;
+  height: 100%;
+  background: var(--forge-panel);
+  border: 1px solid var(--forge-line);
+  border-radius: 8px;
+  padding: 0 1em;
+  font-size: 0.95rem;
+}
+.capture-bar__input:focus { outline: none; border-color: var(--forge-ember); }
+
+.capture-list {
+  position: fixed;
+  left: 1.4rem;
+  right: 1.4rem;
+  bottom: 4.2rem;
+  max-width: 480px;
+  max-height: 40vh;
+  overflow-y: auto;
+  background: var(--forge-panel);
+  border: 1px solid var(--forge-line);
+  border-radius: 12px;
+  padding: 0.6rem;
+  z-index: 19;
+}
+.capture-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.55em 0.5em;
+  border-bottom: 1px solid var(--forge-line);
+}
+.capture-row:last-child { border-bottom: none; }
+.capture-row__text { flex: 1; font-size: 0.9rem; }
+.capture-row__time { font-size: 0.75rem; color: var(--forge-ash-dim); }
+.capture-list__empty { color: var(--forge-ash-dim); font-size: 0.85rem; padding: 0.6rem; }
+
+/* ---- 定義層表單 ---------------------------------------------------------- */
+
+.definition-panel__title { margin: 0 0 0.2rem; font-size: 1.15rem; }
+.definition-panel__task-title { color: var(--forge-ash-dim); margin: 0 0 1.2rem; font-size: 0.9rem; }
+.definition-panel__actions { display: flex; justify-content: flex-end; gap: 0.6em; margin-top: 1.2rem; }
+
+.milestone-editor { display: flex; flex-direction: column; gap: 0.5em; margin-bottom: 0.6em; }
+.milestone-row { display: flex; gap: 0.5em; align-items: center; }
+.milestone-row__label { flex: 2; }
+.milestone-row__percent { flex: 1; }
+
+/* ---- 任務詳情 ------------------------------------------------------------ */
+
+.task-detail-panel { max-width: 520px; }
+.task-detail__head { margin-bottom: 1rem; }
+.task-detail__title { margin: 0 0 0.3em; font-size: 1.2rem; color: #f2ece4; }
+.task-detail__skin { font-size: 0.85rem; color: var(--forge-ash-dim); margin: 0; }
+.task-detail__body { margin-bottom: 1.2rem; }
+.task-detail__stats { font-size: 0.9rem; color: var(--forge-ash); }
+.task-detail__quality { font-size: 1.1rem; font-weight: 600; margin: 0.6em 0; }
+.task-detail__btn-row { display: flex; gap: 0.6em; margin-top: 0.8em; }
+.task-detail__actions { display: flex; justify-content: space-between; gap: 0.6em; margin-top: 1rem; }
+
+.progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--forge-black);
+  overflow: hidden;
+  margin-bottom: 0.9rem;
+}
+.progress-bar__fill { height: 100%; background: var(--forge-ember); transition: width 0.4s; }
+
+.milestone-list { display: flex; flex-direction: column; gap: 0.4em; margin-bottom: 1rem; }
+.milestone-item { display: flex; align-items: center; gap: 0.6em; font-size: 0.9rem; cursor: pointer; }
+.milestone-item em { margin-left: auto; font-style: normal; color: var(--forge-ash-dim); font-size: 0.8rem; }
+.milestone-item--done span { text-decoration: line-through; color: var(--forge-ash-dim); }
+
+.task-detail__logs { border-top: 1px solid var(--forge-line); padding-top: 0.8rem; }
+.log-list { display: flex; flex-direction: column; gap: 0.4em; max-height: 140px; overflow-y: auto; margin-bottom: 0.6em; }
+.log-row { margin: 0; font-size: 0.85rem; color: var(--forge-ash); }
+
+/* ---- 回爐確認（§9.3） ----------------------------------------------------- */
+
+.melt-panel { text-align: center; max-width: 360px; }
+.melt-panel__text { font-size: 1.05rem; margin: 0 0 1.4rem; }
+.melt-panel__actions { display: flex; gap: 0.7em; justify-content: center; }
+
+/* ---- 設定 / 心情日誌回顧 --------------------------------------------------- */
+
+.settings-panel__title, .daylog-panel__title { margin: 0 0 1rem; }
+.settings-animals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5em; }
+.settings-animal { display: flex; align-items: center; gap: 0.5em; font-size: 0.9rem; }
+.settings-spotify-row { display: flex; align-items: center; gap: 0.6em; margin-bottom: 0.5em; }
+.settings-spotify-row span { width: 3.4em; font-size: 0.85rem; color: var(--forge-ash-dim); }
+
+.daylog-list { display: flex; flex-direction: column; gap: 0.5em; max-height: 55vh; overflow-y: auto; margin-bottom: 1rem; }
+.daylog-row { border-left: 3px solid; padding: 0.4em 0.8em; }
+.daylog-row__date { font-size: 0.75rem; color: var(--forge-ash-dim); margin-right: 0.6em; }
+.daylog-row__mood { font-size: 0.85rem; }
+.daylog-row__text { margin: 0.2em 0 0; font-size: 0.85rem; color: var(--forge-ash); }
+
+/* ---- 鍛造完成儀式（§8） ---------------------------------------------------- */
+
+.ceremony {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 3, 2, 0.4);
+  transition: background 0.8s ease;
+}
+.ceremony.phase-dim { background: rgba(5, 3, 2, 0.86); }
+.ceremony.phase-pulse { background: rgba(5, 3, 2, 0.86); animation: ceremony-pulse 0.23s ease-in-out 3; }
+.ceremony.phase-reveal, .ceremony.phase-settle { background: rgba(5, 3, 2, 0.78); }
+.ceremony.phase-legendary { background: rgba(30, 20, 3, 0.55); }
+
+@keyframes ceremony-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+.ceremony__stage {
   text-align: center;
+  max-width: 420px;
   padding: 2rem;
 }
+.ceremony__skin {
+  font-size: 1.3rem;
+  color: var(--forge-ash);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.ceremony.phase-dim .ceremony__skin,
+.ceremony.phase-pulse .ceremony__skin { opacity: 1; transform: scale(1.15); }
+.ceremony.phase-reveal .ceremony__skin,
+.ceremony.phase-settle .ceremony__skin { opacity: 1; transform: scale(1); color: var(--quality-color, var(--forge-ember)); }
 
-.entry h1 {
-  color: var(--forge-ember);
-  letter-spacing: 0.1em;
+.ceremony__quality {
+  margin-top: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: ceremony-fade-up 0.6s ease forwards;
+  text-shadow: 0 0 18px currentColor;
+}
+@keyframes ceremony-fade-up {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ceremony__traits {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  justify-content: center;
+}
+.trait-chip--reveal {
+  opacity: 0;
+  animation: ceremony-chip-in 0.4s ease forwards;
+  font-size: 0.85rem;
+  padding: 0.3em 0.9em;
+}
+@keyframes ceremony-chip-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ceremony__close { margin-top: 1.6rem; }
+
+/* ---- 全域鍛造中氛圍：其餘元素略微靜下 ------------------------------------- */
+
+body.ceremony-active .app-root,
+body.ceremony-active .capture-bar,
+body.ceremony-active .capture-list,
+body.ceremony-active .animal-layer {
+  filter: brightness(0.55);
+  transition: filter 0.6s ease;
+}
+
+/* ---- 背景動物層（§11） ----------------------------------------------------- */
+
+.animal-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.animal-wrap {
+  position: absolute;
+  left: 0;
+  transition: opacity 1.5s ease;
+}
+.animal-glyph { display: inline-block; filter: saturate(0.7); }
+
+.animal-wrap--ltr { animation: animal-move-ltr var(--duration, 30s) linear forwards; }
+.animal-wrap--rtl { animation: animal-move-rtl var(--duration, 30s) linear forwards; right: 0; left: auto; }
+
+@keyframes animal-move-ltr {
+  from { transform: translateX(-15vw); }
+  to { transform: translateX(115vw); }
+}
+@keyframes animal-move-rtl {
+  from { transform: translateX(15vw) scaleX(-1); }
+  to { transform: translateX(-115vw) scaleX(-1); }
+}
+
+.animal-layer.is-focus .animal-wrap { opacity: 0.4; }
+
+/* ---- 響應式 ---------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .topbar__title { position: static; transform: none; }
+  .topbar { flex-wrap: wrap; gap: 0.6em; justify-content: center; }
+  .wall__grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .overlay__panel { padding: 1.3rem; }
 }

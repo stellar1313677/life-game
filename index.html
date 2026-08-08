@@ -7,10 +7,175 @@
   <link rel="stylesheet" href="src/css/style.css" />
 </head>
 <body>
-  <main class="entry">
-    <h1>鐵匠鋪</h1>
-    <p>爐火還沒點燃。專案架構已就緒，等待第一次鍛造。</p>
-  </main>
+
+  <!-- 背景動物層：畫面最底，一次最多一隻 -->
+  <div id="animal-layer" class="animal-layer" aria-hidden="true"></div>
+
+  <!-- 首次啟動：分支選擇 + 開場故事 -->
+  <div id="onboarding" class="overlay overlay--onboarding" hidden>
+    <div class="overlay__panel onboarding__panel">
+      <div id="onboarding-branches" class="branch-grid"></div>
+      <div id="onboarding-story" class="onboarding-story" hidden>
+        <p id="onboarding-story-text" class="onboarding-story__text"></p>
+        <p class="onboarding-story__hint">隨時可以換，換了之後打的東西才會變。</p>
+        <button id="onboarding-enter" class="btn btn--primary">拿起鐵鎚</button>
+      </div>
+      <button id="onboarding-skip" class="btn btn--ghost onboarding__skip">跳過故事</button>
+    </div>
+  </div>
+
+  <!-- Layer 0：心情簽到，每次開啟必經 -->
+  <div id="mood-checkin" class="overlay overlay--mood" hidden>
+    <div class="overlay__panel mood-panel">
+      <p class="mood-panel__question">現在感覺怎麼樣？</p>
+      <div id="mood-tags" class="mood-tags"></div>
+      <textarea id="mood-free-text" class="mood-panel__text" placeholder="想多寫幾句也可以（選填）" rows="2"></textarea>
+      <p id="mood-response" class="mood-panel__response" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <!-- 主畫面 -->
+  <div id="app-root" class="app-root" hidden>
+
+    <header class="topbar">
+      <button id="branch-switch" class="topbar__branch" type="button" title="切換分支"></button>
+      <h1 class="topbar__title">鐵匠鋪</h1>
+      <div class="topbar__actions">
+        <button id="open-spotify" class="icon-btn" type="button" title="開啟 Spotify">🎵</button>
+        <button id="open-daylog" class="icon-btn" type="button" title="心情日誌">📖</button>
+        <button id="open-settings" class="icon-btn" type="button" title="設定">⚙️</button>
+      </div>
+    </header>
+
+    <main class="wall" id="wall">
+      <section class="wall__section">
+        <h2 class="wall__heading">鍛造中</h2>
+        <div id="section-active" class="wall__grid wall__grid--active"></div>
+      </section>
+      <section class="wall__section">
+        <h2 class="wall__heading">已成之器</h2>
+        <div id="section-completed" class="wall__grid"></div>
+      </section>
+      <section class="wall__section wall__section--paused" id="paused-section">
+        <button id="toggle-paused" class="wall__heading wall__heading--toggle" type="button">靜置區 <span id="paused-count"></span></button>
+        <div id="section-paused" class="wall__grid" hidden></div>
+      </section>
+    </main>
+
+    <!-- 捕捉層：永遠可見的浮動輸入框 -->
+    <div class="capture-bar">
+      <button id="toggle-capture-list" class="capture-bar__toggle" type="button" aria-expanded="false">暫存區</button>
+      <form id="capture-form" class="capture-bar__form">
+        <input id="capture-input" class="capture-bar__input" type="text" placeholder="想到什麼，先丟進來……" autocomplete="off" />
+      </form>
+    </div>
+    <div id="capture-list" class="capture-list" hidden></div>
+
+  </div>
+
+  <!-- 定義層：升格表單 -->
+  <div id="definition-modal" class="overlay" hidden>
+    <div class="overlay__panel definition-panel">
+      <h3 class="definition-panel__title">這件事，要怎麼打？</h3>
+      <p id="definition-task-title" class="definition-panel__task-title"></p>
+
+      <div class="field">
+        <span class="field__label">類型</span>
+        <div class="segmented" id="definition-type">
+          <button type="button" class="segmented__opt" data-type="EPIC">史詩神器（一次性）</button>
+          <button type="button" class="segmented__opt" data-type="LEGACY">傳承武器（習慣）</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field__label">標籤（選填）</span>
+        <div class="segmented" id="definition-tag">
+          <button type="button" class="segmented__opt" data-tag="URGENT">緊急</button>
+          <button type="button" class="segmented__opt" data-tag="DAILY">日常</button>
+          <button type="button" class="segmented__opt segmented__opt--active" data-tag="">無</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field__label">這件事對你來說有多難？</span>
+        <input id="definition-difficulty" type="range" min="1" max="10" value="5" />
+        <p id="definition-difficulty-hint" class="field__hint"></p>
+      </div>
+
+      <div class="field" id="definition-milestones-field" hidden>
+        <span class="field__label">節點（選填）</span>
+        <div id="definition-milestones" class="milestone-editor"></div>
+        <button id="definition-add-milestone" type="button" class="btn btn--ghost btn--small">+ 加一個節點</button>
+      </div>
+
+      <div class="definition-panel__actions">
+        <button id="definition-cancel" type="button" class="btn btn--ghost">先放著</button>
+        <button id="definition-submit" type="button" class="btn btn--primary" disabled>開始打造</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任務詳情 / 節點 / 鍛造 / 熔毀入口 -->
+  <div id="task-detail" class="overlay" hidden>
+    <div class="overlay__panel task-detail-panel" id="task-detail-panel"></div>
+  </div>
+
+  <!-- 熔毀確認 -->
+  <div id="melt-confirm" class="overlay overlay--melt" hidden>
+    <div class="overlay__panel melt-panel">
+      <p class="melt-panel__text">回爐重來。這把就不留了。</p>
+      <div class="melt-panel__actions">
+        <button id="melt-confirm-yes" class="btn btn--danger" type="button">回爐</button>
+        <button id="melt-confirm-no" class="btn btn--ghost" type="button">再看看</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 鍛造完成儀式 -->
+  <div id="ceremony" class="ceremony" hidden>
+    <div class="ceremony__stage">
+      <div id="ceremony-skin" class="ceremony__skin"></div>
+      <div id="ceremony-quality" class="ceremony__quality" hidden></div>
+      <div id="ceremony-traits" class="ceremony__traits" hidden></div>
+      <button id="ceremony-close" class="btn btn--primary ceremony__close" type="button" hidden>收下</button>
+    </div>
+  </div>
+
+  <!-- 設定面板 -->
+  <div id="settings-panel" class="overlay" hidden>
+    <div class="overlay__panel settings-panel">
+      <h3 class="settings-panel__title">設定</h3>
+
+      <div class="field">
+        <span class="field__label">動物出沒</span>
+        <div id="settings-animals" class="settings-animals"></div>
+      </div>
+
+      <div class="field">
+        <span class="field__label">Spotify 歌單（依心情對應，選填）</span>
+        <div id="settings-spotify" class="settings-spotify"></div>
+      </div>
+
+      <button id="settings-close" class="btn btn--primary">完成</button>
+    </div>
+  </div>
+
+  <!-- 心情日誌回顧 -->
+  <div id="daylog-panel" class="overlay" hidden>
+    <div class="overlay__panel daylog-panel">
+      <h3 class="daylog-panel__title">心情日誌</h3>
+      <div id="daylog-list" class="daylog-list"></div>
+      <button id="daylog-close" class="btn btn--primary">關閉</button>
+    </div>
+  </div>
+
+  <script src="src/js/data.js"></script>
+  <script src="src/js/state.js"></script>
+  <script src="src/js/rolls.js"></script>
+  <script src="src/js/animals.js"></script>
+  <script src="src/js/render.js"></script>
+  <script src="src/js/ceremony.js"></script>
+  <script src="src/js/ui.js"></script>
   <script src="src/js/main.js"></script>
 </body>
 </html>

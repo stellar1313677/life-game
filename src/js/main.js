@@ -1,10 +1,13 @@
-// life-game 鐵匠鋪 — 入口腳本
-// 開發依 docs/sdd.md 第 9 節優先順序進行：
-// P0: 捕捉層、定義層、心情日誌
-// P0: 史詩神器（進度條、節點、詞條 roll）
-// P1: 傳承武器（鍛造次數、強化 roll）
-// P1: 展覽牆（殘缺度 SVG 呈現）
-// P2: 音樂深層連結、牆面氛圍
-// P3: 詞條組合池擴充
+// 鐵匠鋪 — 入口腳本
+// 啟動順序見 docs/sdd-v2.md §1：
+//   首次啟動 → 分支選擇 + 開場故事（可跳過）
+//   每次啟動 → Layer 0 心情簽到（唯一必經）→ 主畫面
 
-console.log("鐵匠鋪已就緒，等待第一次鍛造。");
+(function () {
+  "use strict";
+
+  document.addEventListener("DOMContentLoaded", function () {
+    UI.wireAll();
+    UI.showOnboardingIfNeeded();
+  });
+})();
