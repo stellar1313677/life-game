@@ -154,9 +154,17 @@
     { id: "OWL", label: "貓頭鷹", layer: "mid-near", widthPct: 11, opacity: 0.15, duration: 35, quiet: true, motion: "fly" },
     { id: "KOI", label: "錦鯉", layer: "near", widthPct: 15, opacity: 0.12, duration: 18, quiet: false, motion: "swim" },
     { id: "TURTLE", label: "烏龜", layer: "near", widthPct: 9, opacity: 0.15, duration: 30, quiet: false, motion: "walk" },
-    { id: "SNAIL", label: "蝸牛", layer: "extreme-near", widthPct: 6, opacity: 0.20, duration: 40, quiet: true, motion: "crawl" }
+    { id: "SNAIL", label: "蝸牛", layer: "extreme-near", widthPct: 6, opacity: 0.20, duration: 40, quiet: true, motion: "crawl" },
+    // 狗：SDD §11.2 原始 10 種之外新增的第 11 種，用真實圖片幀（非程序化線稿），
+    // 見 animal_pictures/dog/。4 張圖依檔名順序當一組跑步循環幀，素材原始朝向
+    // 朝左，跟其餘動物預設朝右相反，故標記 facingLeft，由 animals.js 反過來鏡射。
+    {
+      id: "DOG", label: "狗", layer: "mid-near", widthPct: 12, opacity: 0.15, duration: 14, quiet: false,
+      motion: "image", facingLeft: true,
+      frames: ["animal_pictures/dog/dog_1.png", "animal_pictures/dog/dog_2.png", "animal_pictures/dog/dog_3.png", "animal_pictures/dog/dog_4.png"]
+    }
   ];
-  var ANIMAL_MVP_DEFAULT = ["WHALE", "CAT", "FIREFLY"]; // §15.2 MVP 動物
+  var ANIMAL_MVP_DEFAULT = ["WHALE", "CAT", "FIREFLY", "DOG"]; // §15.2 MVP 動物 + 使用者指定新增的狗
 
   // §3.1：skin 完全隨機、等機率抽取。MVP 僅 mvp:true 的項目會被抽到。
   function pickRandomSkin(branch, excludeId) {

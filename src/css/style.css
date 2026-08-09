@@ -553,7 +553,7 @@ body.ceremony-active .animal-layer {
    .animal-wrap（橫越畫面的長距離位移）
      > .animal-bob（走路／游動的短週期上下搖擺，infinite）
          > .animal-glyph（透明度容器，可裝 1 個或 3 個 icon）
-             > .animal-frame（實際的 SVG 剪影，JS 每隔一段時間換幀，見 animals.js） */
+             > .animal-frame（實際的 SVG 剪影或圖片，JS 每隔一段時間換幀，見 animals.js） */
 .animal-wrap {
   position: absolute;
   left: 0;
@@ -565,7 +565,10 @@ body.ceremony-active .animal-layer {
 .animal-glyph { display: flex; align-items: center; }
 .animal-frame { display: inline-block; color: var(--forge-ash); filter: saturate(0.7); }
 .animal-frame svg { width: 100%; height: 100%; display: block; }
-.animal-wrap--rtl .animal-frame { transform: scaleX(-1); }
+.animal-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* 是否鏡射由 JS 依素材原始朝向（animal.facingLeft）跟移動方向算好直接掛 class，
+   不再靠 .animal-wrap--rtl 選擇器猜——不同素材的原始朝向不一定相同（見 animals.js）。 */
+.animal-frame--mirror { transform: scaleX(-1); }
 
 .animal-wrap--ltr { animation: animal-move-ltr var(--duration, 30s) linear forwards; }
 .animal-wrap--rtl { animation: animal-move-rtl var(--duration, 30s) linear forwards; }
