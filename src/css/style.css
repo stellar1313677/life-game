@@ -224,6 +224,7 @@ input[type="range"] { width: 100%; accent-color: var(--forge-ember); }
   color: var(--forge-ember);
   font-size: 1.1rem;
 }
+.branch-switcher { position: relative; }
 .topbar__branch {
   background: transparent;
   border: 1px solid var(--forge-line);
@@ -233,6 +234,34 @@ input[type="range"] { width: 100%; accent-color: var(--forge-ember); }
   font-size: 0.8rem;
   cursor: pointer;
 }
+.topbar__branch:hover { border-color: var(--forge-ember); }
+.branch-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 30;
+  background: var(--forge-panel);
+  border: 1px solid var(--forge-line);
+  border-radius: 10px;
+  padding: 0.6rem;
+  min-width: 160px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+.branch-menu__options { display: flex; flex-direction: column; gap: 0.3em; margin-bottom: 0.5em; }
+.branch-menu__opt {
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--forge-ash);
+  padding: 0.4em 0.6em;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.branch-menu__opt:hover { border-color: var(--forge-line); background: var(--forge-panel-2); }
+.branch-menu__opt--active { color: var(--forge-ember-bright); font-weight: 600; }
+.branch-menu__hint { margin: 0; font-size: 0.72rem; color: var(--forge-ash-dim); border-top: 1px solid var(--forge-line); padding-top: 0.5em; }
+
 .topbar__actions { display: flex; gap: 0.3em; }
 
 /* ---- 展覽牆（§10） -------------------------------------------------------- */
@@ -445,11 +474,31 @@ input[type="range"] { width: 100%; accent-color: var(--forge-ember); }
 .settings-spotify-row { display: flex; align-items: center; gap: 0.6em; margin-bottom: 0.5em; }
 .settings-spotify-row span { width: 3.4em; font-size: 0.85rem; color: var(--forge-ash-dim); }
 
-.daylog-list { display: flex; flex-direction: column; gap: 0.5em; max-height: 55vh; overflow-y: auto; margin-bottom: 1rem; }
-.daylog-row { border-left: 3px solid; padding: 0.4em 0.8em; }
-.daylog-row__date { font-size: 0.75rem; color: var(--forge-ash-dim); margin-right: 0.6em; }
-.daylog-row__mood { font-size: 0.85rem; }
-.daylog-row__text { margin: 0.2em 0 0; font-size: 0.85rem; color: var(--forge-ash); }
+.daylog-nav { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.6rem; }
+.daylog-nav__label { font-size: 0.95rem; color: var(--forge-ash); min-width: 6em; text-align: center; }
+.daylog-weekdays, .daylog-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.3em; }
+.daylog-weekdays { margin-bottom: 0.3em; }
+.daylog-weekdays span { text-align: center; font-size: 0.72rem; color: var(--forge-ash-dim); }
+.daylog-calendar { margin-bottom: 0.8rem; }
+.daylog-cell {
+  aspect-ratio: 1;
+  border: 1px solid var(--forge-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--forge-ash-dim);
+  font-size: 0.78rem;
+  cursor: default;
+}
+.daylog-cell--pad { border: none; background: transparent; }
+.daylog-cell--logged {
+  cursor: pointer;
+  color: #14100d;
+  font-weight: 600;
+  border-color: var(--cell-color, var(--forge-ember));
+  background: var(--cell-color, var(--forge-ember));
+}
+.daylog-cell--logged:hover { filter: brightness(1.12); }
+.daylog-detail { border-left: 3px solid var(--forge-line); padding: 0.4em 0.8em; font-size: 0.85rem; color: var(--forge-ash); margin: 0 0 0.8rem; }
 
 /* ---- 鍛造完成儀式（§8） ---------------------------------------------------- */
 
@@ -534,10 +583,88 @@ input[type="range"] { width: 100%; accent-color: var(--forge-ember); }
 body.ceremony-active .app-root,
 body.ceremony-active .capture-bar,
 body.ceremony-active .capture-list,
-body.ceremony-active .animal-layer {
+body.ceremony-active .animal-layer,
+body.ceremony-active .branch-bg,
+body.ceremony-active .dragon-decor {
   filter: brightness(0.55);
   transition: filter 0.6s ease;
 }
+
+/* ---- 分支背景（§10.1）與動物配色（§11.6） ------------------------------------
+   三個分支共用同一套暗色鍛造基底（body 的 mood 主題已經處理過色溫），
+   這裡疊加的是「分支專屬」的裝飾紋理跟動物剪影染色，全部 CSS-only、
+   不需要額外圖片素材，跟武器 skin 圖示的「程序化」精神一致。 */
+
+.branch-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+/* MODERN：科技實驗室——金屬格線 + 一道緩慢掃過的冷光 */
+body.branch-modern .branch-bg {
+  opacity: 1;
+  background-image:
+    linear-gradient(rgba(126, 200, 227, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 200, 227, 0.05) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+body.branch-modern .branch-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(126, 200, 227, 0.06) 50%, transparent 100%);
+  background-size: 100% 280px;
+  background-repeat: no-repeat;
+  animation: modern-scan 9s linear infinite;
+}
+@keyframes modern-scan {
+  from { background-position-y: -280px; }
+  to { background-position-y: 100vh; }
+}
+
+/* XIANXIA：陣法煉器室——懸浮陣紋緩慢旋轉，模擬流動的靈氣 */
+body.branch-xianxia .branch-bg {
+  opacity: 1;
+  background: repeating-radial-gradient(circle at 50% 35%, rgba(203, 185, 148, 0.07) 0 2px, transparent 2px 70px);
+  animation: xianxia-rotate 100s linear infinite;
+}
+@keyframes xianxia-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* MAGIC：鐵匠鋪——木質層架紋理 + 底部爐火餘光 */
+body.branch-magic .branch-bg {
+  opacity: 1;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(217, 123, 63, 0.14), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(217, 123, 63, 0.035) 0 2px, transparent 2px 34px);
+}
+
+/* MAGIC 專屬：邊緣龍頭裝飾，純裝飾、不遮擋展示區（§10.1 約束：≤12% 寬度） */
+.dragon-decor {
+  display: none;
+  position: fixed;
+  top: 4.4rem;
+  left: 0.6rem;
+  width: min(9vw, 110px);
+  opacity: 0.3;
+  color: var(--forge-ember);
+  pointer-events: none;
+  z-index: 1;
+}
+.dragon-decor svg { width: 100%; height: auto; display: block; }
+body.branch-magic .dragon-decor { display: block; }
+
+/* 動物剪影染色：三個分支各自的配色傾向（§11.6），套在既有的 .animal-frame 上，
+   狗雖然是真實圖片而非 SVG，filter 一樣對點陣圖有效，維持風格一致。 */
+.animal-frame { color: var(--animal-tint, var(--forge-ash)); filter: saturate(0.7); }
+body.branch-modern .animal-frame { --animal-tint: #7ec8e3; filter: saturate(0.55) contrast(1.08); }
+body.branch-xianxia .animal-frame { --animal-tint: #cbb994; filter: sepia(0.35) saturate(0.5); }
+body.branch-magic .animal-frame { --animal-tint: #b89bd9; filter: saturate(0.6) drop-shadow(0 0 3px rgba(179, 157, 219, 0.55)); }
 
 /* ---- 背景動物層（§11） ----------------------------------------------------- */
 
@@ -563,7 +690,8 @@ body.ceremony-active .animal-layer {
   animation: animal-bob var(--bob-dur, 0.9s) ease-in-out infinite;
 }
 .animal-glyph { display: flex; align-items: center; }
-.animal-frame { display: inline-block; color: var(--forge-ash); filter: saturate(0.7); }
+/* color/filter（分支染色）定義在上面「分支背景與動物配色」那段，這裡只管排版 */
+.animal-frame { display: inline-block; }
 .animal-frame svg { width: 100%; height: 100%; display: block; }
 .animal-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
 /* 是否鏡射由 JS 依素材原始朝向（animal.facingLeft）跟移動方向算好直接掛 class，

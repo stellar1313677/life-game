@@ -31,44 +31,45 @@
     ]
   };
 
-  // ---- §3 武器 Skin（MVP 僅 MODERN 分支開放 3 種，其餘列為文件參考） ----
+  // ---- §3 武器 Skin -------------------------------------------------------
+  // 三個分支現在全部開放（見 docs/sdd-v2.md §15.3 P1/P2/P3），10 種全部 mvp:true。
 
   var SKINS = {
     MODERN: [
       { id: 1, name: "霰彈槍", form: "遠程・重", mvp: true, glyph: "shotgun" },
       { id: 2, name: "步槍", form: "遠程・標準", mvp: true, glyph: "rifle" },
-      { id: 3, name: "手槍", form: "遠程・輕", mvp: false, glyph: "pistol" },
+      { id: 3, name: "手槍", form: "遠程・輕", mvp: true, glyph: "pistol" },
       { id: 4, name: "動力刀", form: "近戰", mvp: true, glyph: "blade" },
-      { id: 5, name: "磁軌炮", form: "遠程・特大", mvp: false, glyph: "cannon" },
-      { id: 6, name: "無人機", form: "輔助", mvp: false, glyph: "drone" },
-      { id: 7, name: "護盾發生器", form: "防禦", mvp: false, glyph: "shield" },
-      { id: 8, name: "電磁鞭", form: "近戰・異形", mvp: false, glyph: "whip" },
-      { id: 9, name: "外骨骼拳套", form: "近戰・重", mvp: false, glyph: "gauntlet" },
-      { id: 10, name: "訊號塔", form: "異形・裝置", mvp: false, glyph: "tower" }
+      { id: 5, name: "磁軌炮", form: "遠程・特大", mvp: true, glyph: "cannon" },
+      { id: 6, name: "無人機", form: "輔助", mvp: true, glyph: "drone" },
+      { id: 7, name: "護盾發生器", form: "防禦", mvp: true, glyph: "shield" },
+      { id: 8, name: "電磁鞭", form: "近戰・異形", mvp: true, glyph: "whip" },
+      { id: 9, name: "外骨骼拳套", form: "近戰・重", mvp: true, glyph: "gauntlet" },
+      { id: 10, name: "訊號塔", form: "異形・裝置", mvp: true, glyph: "tower" }
     ],
     XIANXIA: [
-      { id: 1, name: "飛劍", form: "近戰・經典", mvp: false, glyph: "blade" },
-      { id: 2, name: "葫蘆", form: "輔助・容器", mvp: false, glyph: "gourd" },
-      { id: 3, name: "符咒", form: "遠程・輕", mvp: false, glyph: "talisman" },
-      { id: 4, name: "拂塵", form: "輔助・近戰", mvp: false, glyph: "whisk" },
-      { id: 5, name: "玉笛", form: "輔助・音", mvp: false, glyph: "flute" },
-      { id: 6, name: "陣盤", form: "裝置", mvp: false, glyph: "disc" },
-      { id: 7, name: "油紙傘", form: "防禦・異形", mvp: false, glyph: "umbrella" },
-      { id: 8, name: "銅鏡", form: "輔助・反制", mvp: false, glyph: "mirror" },
-      { id: 9, name: "定海針", form: "近戰・重", mvp: false, glyph: "needle" },
-      { id: 10, name: "丹爐", form: "裝置・煉製", mvp: false, glyph: "cauldron" }
+      { id: 1, name: "飛劍", form: "近戰・經典", mvp: true, glyph: "flying_sword" },
+      { id: 2, name: "葫蘆", form: "輔助・容器", mvp: true, glyph: "gourd" },
+      { id: 3, name: "符咒", form: "遠程・輕", mvp: true, glyph: "talisman" },
+      { id: 4, name: "拂塵", form: "輔助・近戰", mvp: true, glyph: "whisk" },
+      { id: 5, name: "玉笛", form: "輔助・音", mvp: true, glyph: "flute" },
+      { id: 6, name: "陣盤", form: "裝置", mvp: true, glyph: "disc" },
+      { id: 7, name: "油紙傘", form: "防禦・異形", mvp: true, glyph: "umbrella" },
+      { id: 8, name: "銅鏡", form: "輔助・反制", mvp: true, glyph: "mirror" },
+      { id: 9, name: "定海針", form: "近戰・重", mvp: true, glyph: "needle" },
+      { id: 10, name: "丹爐", form: "裝置・煉製", mvp: true, glyph: "cauldron" }
     ],
     MAGIC: [
-      { id: 1, name: "火球杖", form: "遠程・火", mvp: false, glyph: "staff" },
-      { id: 2, name: "冰束杖", form: "遠程・冰", mvp: false, glyph: "staff" },
-      { id: 3, name: "聖騎士劍", form: "近戰・重", mvp: false, glyph: "blade" },
-      { id: 4, name: "魔導書", form: "輔助・施法", mvp: false, glyph: "book" },
-      { id: 5, name: "精靈弓", form: "遠程・輕", mvp: false, glyph: "bow" },
-      { id: 6, name: "骨杖", form: "遠程・暗", mvp: false, glyph: "staff" },
-      { id: 7, name: "塔盾", form: "防禦", mvp: false, glyph: "shield" },
-      { id: 8, name: "符文戰錘", form: "近戰・重", mvp: false, glyph: "hammer" },
-      { id: 9, name: "水晶球", form: "裝置・預言", mvp: false, glyph: "orb" },
-      { id: 10, name: "契約匕首", form: "近戰・輕", mvp: false, glyph: "dagger" }
+      { id: 1, name: "火球杖", form: "遠程・火", mvp: true, glyph: "fire_staff" },
+      { id: 2, name: "冰束杖", form: "遠程・冰", mvp: true, glyph: "ice_staff" },
+      { id: 3, name: "聖騎士劍", form: "近戰・重", mvp: true, glyph: "holy_sword" },
+      { id: 4, name: "魔導書", form: "輔助・施法", mvp: true, glyph: "book" },
+      { id: 5, name: "精靈弓", form: "遠程・輕", mvp: true, glyph: "bow" },
+      { id: 6, name: "骨杖", form: "遠程・暗", mvp: true, glyph: "bone_staff" },
+      { id: 7, name: "塔盾", form: "防禦", mvp: true, glyph: "tower_shield" },
+      { id: 8, name: "符文戰錘", form: "近戰・重", mvp: true, glyph: "hammer" },
+      { id: 9, name: "水晶球", form: "裝置・預言", mvp: true, glyph: "orb" },
+      { id: 10, name: "契約匕首", form: "近戰・輕", mvp: true, glyph: "dagger" }
     ]
   };
 
@@ -178,8 +179,7 @@
 
   // ---- skin 圖示（程序化線稿，見 docs/appearancebug.md #2）--------------------------
   // 每個 glyph key 對應一組 SVG path/shape 內容（viewBox 0 0 64 64），
-  // 用 currentColor 上色，讓卡片能用品質色直接染色。目前只手繪了 MODERN
-  // 分支 10 種 glyph；XIANXIA / MAGIC 分支尚未開放，未來要開時在這裡補。
+  // 用 currentColor 上色，讓卡片能用品質色直接染色。三個分支各 10 種、全部畫好。
   var GLYPH_ICONS = {
     shotgun:
       '<rect x="6" y="30" width="40" height="6" rx="1"/><rect x="6" y="30" width="14" height="6" rx="1" fill="currentColor" stroke="none"/>' +
@@ -207,6 +207,55 @@
       '<path d="M40 30 L52 30 L52 38 L40 38"/>',
     tower:
       '<line x1="32" y1="4" x2="32" y2="20"/><circle cx="32" cy="4" r="3"/><path d="M32 20 L16 58 M32 20 L48 58 M22 40 L42 40"/>',
+
+    // ---- 仙俠分支 10 種 ----
+    flying_sword:
+      '<path d="M32 4 L36 42 L32 48 L28 42 Z"/><path d="M24 42 L40 42"/><path d="M32 48 Q30 54 24 56 Q28 58 26 62"/>',
+    gourd:
+      '<circle cx="32" cy="16" r="6"/><path d="M26 22 Q32 18 38 22 Q42 30 38 40 Q32 46 26 40 Q22 30 26 22 Z"/><path d="M32 8 L32 4 M28 4 L36 4"/>',
+    talisman:
+      '<rect x="22" y="10" width="20" height="40" rx="2"/><path d="M27 18 L37 18 M27 26 Q32 22 37 26 M27 34 L37 34 M27 42 Q32 38 37 42"/><path d="M32 4 L32 10"/>',
+    whisk:
+      '<path d="M32 30 L32 58"/><path d="M32 30 Q20 10 14 6 M32 30 Q26 8 24 4 M32 30 Q32 6 32 2 M32 30 Q38 8 40 4 M32 30 Q44 10 50 6"/>',
+    flute:
+      '<rect x="6" y="30" width="52" height="6" rx="3"/><circle cx="18" cy="33" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<circle cx="26" cy="33" r="1.4" fill="currentColor" stroke="none"/><circle cx="34" cy="33" r="1.4" fill="currentColor" stroke="none"/>' +
+      '<circle cx="42" cy="33" r="1.4" fill="currentColor" stroke="none"/>',
+    disc:
+      '<circle cx="32" cy="32" r="22"/><circle cx="32" cy="32" r="12"/><path d="M32 10 L32 20 M32 44 L32 54 M10 32 L20 32 M44 32 L54 32"/>',
+    umbrella:
+      '<path d="M10 30 Q32 6 54 30 Q44 24 32 24 Q20 24 10 30 Z"/><path d="M32 24 L32 58"/><path d="M32 54 Q28 58 24 56"/>' +
+      '<path d="M18 28 L18 20 M32 24 L32 14 M46 28 L46 20"/>',
+    mirror:
+      '<circle cx="32" cy="24" r="16"/><path d="M32 40 L32 58"/><path d="M26 58 L38 58"/><path d="M24 20 Q32 16 40 20"/>',
+    needle:
+      '<line x1="32" y1="6" x2="32" y2="58"/><rect x="24" y="6" width="16" height="6" rx="1"/><rect x="24" y="52" width="16" height="6" rx="1"/>',
+    cauldron:
+      '<path d="M18 30 Q18 46 32 46 Q46 46 46 30 Z"/><path d="M14 30 L50 30"/><path d="M20 46 L14 58 M44 46 L50 58 M32 46 L32 58"/>' +
+      '<path d="M28 24 Q26 18 30 14 M36 24 Q38 18 34 12"/>',
+
+    // ---- 魔法分支 10 種 ----
+    fire_staff:
+      '<line x1="32" y1="16" x2="32" y2="58"/><path d="M32 16 Q24 10 28 4 Q32 8 32 4 Q36 8 36 2 Q40 8 32 16 Z"/>',
+    ice_staff:
+      '<line x1="32" y1="20" x2="32" y2="58"/><path d="M32 20 L24 10 L32 2 L40 10 Z"/><path d="M32 2 L32 20 M24 10 L40 10"/>',
+    holy_sword:
+      '<path d="M32 4 L40 38 L32 46 L24 38 Z"/><path d="M14 38 L50 38"/><path d="M32 46 L32 58"/><path d="M28 52 L36 52"/><path d="M32 4 L32 34"/>',
+    book:
+      '<path d="M10 16 Q32 8 32 16 Q32 8 54 16 L54 46 Q32 38 32 46 Q32 38 10 46 Z"/><path d="M32 16 L32 46"/><circle cx="32" cy="4" r="2" fill="currentColor" stroke="none"/>',
+    bow:
+      '<path d="M20 8 Q44 32 20 56"/><line x1="20" y1="8" x2="20" y2="56"/><path d="M14 32 L44 32"/>',
+    bone_staff:
+      '<line x1="32" y1="20" x2="32" y2="58"/><circle cx="32" cy="12" r="8"/><circle cx="29" cy="10" r="1.4" fill="currentColor" stroke="none"/><circle cx="35" cy="10" r="1.4" fill="currentColor" stroke="none"/>',
+    tower_shield:
+      '<path d="M18 8 L46 8 Q48 8 48 12 L48 50 Q32 60 32 60 Q16 50 16 50 L16 12 Q16 8 18 8 Z"/><path d="M32 8 L32 60 M20 20 L44 20"/>',
+    hammer:
+      '<rect x="16" y="8" width="32" height="16" rx="2"/><line x1="32" y1="24" x2="32" y2="58"/><path d="M24 12 L24 20 M32 12 L32 20 M40 12 L40 20"/>',
+    orb:
+      '<circle cx="32" cy="26" r="18"/><path d="M20 22 Q32 14 44 22 Q36 30 32 26 Q28 22 20 22"/><path d="M20 50 L44 50"/><path d="M26 44 L32 50 L38 44"/>',
+    dagger:
+      '<path d="M32 6 L36 30 L32 36 L28 30 Z"/><path d="M22 30 L42 30"/><path d="M32 36 L32 46"/><circle cx="29" cy="50" r="3"/><circle cx="35" cy="54" r="3"/>',
+
     // 尚未鑄形的原礦（LEGACY 首次鍛造前的預設圖示）
     ore:
       '<path d="M18 44 L12 30 L22 14 L40 10 L52 22 L50 40 L36 52 L20 50 Z"/><path d="M22 14 L30 26 L18 44 M40 10 L34 28 L50 40 M30 26 L36 52"/>'

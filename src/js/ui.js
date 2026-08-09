@@ -16,18 +16,12 @@
     grid.innerHTML = "";
     Object.keys(Data.BRANCH_META).forEach(function (key) {
       var meta = Data.BRANCH_META[key];
-      var implemented = key === "MODERN"; // MVP：僅現代分支完整開放
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "branch-card" + (implemented ? "" : " branch-card--locked");
-      btn.innerHTML = '<span class="branch-card__label"></span><span class="branch-card__note"></span>';
+      btn.className = "branch-card";
+      btn.innerHTML = '<span class="branch-card__label"></span>';
       btn.querySelector(".branch-card__label").textContent = meta.label;
-      btn.querySelector(".branch-card__note").textContent = implemented ? "" : "即將開放";
-      if (implemented) {
-        btn.addEventListener("click", function () { chooseBranch(key); });
-      } else {
-        btn.disabled = true;
-      }
+      btn.addEventListener("click", function () { chooseBranch(key); });
       grid.appendChild(btn);
     });
   }
@@ -106,8 +100,7 @@
   function startApp() {
     document.getElementById("app-root").hidden = false;
     applyMoodTheme();
-    var branchBtn = document.getElementById("branch-switch");
-    branchBtn.textContent = (Data.BRANCH_META[State.data.settings.current_branch] || {}).short || "";
+    applyBranchTheme();
     Render.renderWall();
     Render.renderCaptureList();
     Animals.init();
@@ -118,6 +111,17 @@
     var body = document.body;
     Data.MOOD_ORDER.forEach(function (m) { body.classList.remove("mood-" + Data.MOOD_META[m].tone); });
     if (mood) body.classList.add("mood-" + Data.MOOD_META[mood].tone);
+  }
+
+  // §10.1 分支背景 + §11.6 動物配色：靠 body 上的 branch-xxx class 切換 CSS，
+  // 不用重繪牆面卡片（已存在的任務保留原本的 skin/branch，見 §2.3、§2.4）。
+  function applyBranchTheme() {
+    var branch = State.data.settings.current_branch;
+    var body = document.body;
+    Object.keys(Data.BRANCH_META).forEach(function (b) { body.classList.remove("branch-" + b.toLowerCase()); });
+    if (branch) body.classList.add("branch-" + branch.toLowerCase());
+    var branchBtn = document.getElementById("branch-switch");
+    if (branchBtn) branchBtn.textContent = (Data.BRANCH_META[branch] || {}).short || "";
   }
 
   // ---------------------------------------------------------------------
@@ -627,42 +631,100 @@
   // 心情日誌回顧
   // ---------------------------------------------------------------------
 
-  function wireDaylog() {
-    document.getElementById("open-daylog").addEventListener("click", function () {
-      var wrap = document.getElementById("daylog-list");
-      // 防禦性 try/catch：任何一筆紀錄格式異常都不該讓整個列表開天窗，
-      // 至少要有東西可看（見 docs/appearancebug.md #1 的空白面板事故）。
-      try {
-        wrap.innerHTML = "";
-        var logs = (State.data.dayLogs || []).slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });
-        if (logs.length === 0) {
-          wrap.innerHTML = '<p class="wall__empty">還沒有紀錄。</p>';
-        }
-        logs.forEach(function (l) {
-          var meta = Data.MOOD_META[l.mood_tag] || {};
-          var row = document.createElement("div");
-          row.className = "daylog-row";
-          row.style.borderColor = moodColor(l.mood_tag);
-          row.innerHTML = '<span class="daylog-row__date"></span><span class="daylog-row__mood"></span><p class="daylog-row__text"></p>';
-          row.querySelector(".daylog-row__date").textContent = l.date;
-          row.querySelector(".daylog-row__mood").textContent = (meta.emoji || "") + " " + (meta.label || "");
-          row.querySelector(".daylog-row__text").textContent = l.free_text || "";
-          wrap.appendChild(row);
-        });
-      } catch (err) {
-        console.error("鐵匠鋪：心情日誌渲染失敗", err);
-        wrap.innerHTML = '<p class="wall__empty">日誌讀取失敗，重新整理頁面再試一次。</p>';
-      }
-      document.getElementById("daylog-panel").hidden = false;
-    });
-    document.getElementById("daylog-close").addEventListener("click", function () {
-      document.getElementById("daylog-panel").hidden = true;
-    });
-  }
+  // §13.2：獨立回顧頁，以月曆熱區呈現（顏色 = mood_tag）。未簽到的日子單純
+  // 留白，不標記、不變色、不統計缺席天數——這條規則比「好不好看」更重要。
+  var daylogViewDate = new Date();
 
   function moodColor(tag) {
     var map = { TENSE: "#60A5FA", CALM: "#4ADE80", TIRED: "#A78BFA", EXCITED: "#FBBF24", NUMB: "#9CA3AF" };
     return map[tag] || "#9CA3AF";
+  }
+
+  function pad2(n) { return String(n).length < 2 ? "0" + n : String(n); }
+
+  function renderDaylogWeekdays() {
+    var el = document.getElementById("daylog-weekdays");
+    if (el.childElementCount) return; // 只需要畫一次，跟月份無關
+    ["日", "一", "二", "三", "四", "五", "六"].forEach(function (d) {
+      var span = document.createElement("span");
+      span.textContent = d;
+      el.appendChild(span);
+    });
+  }
+
+  function renderDaylogCalendar() {
+    var grid = document.getElementById("daylog-list");
+    var year = daylogViewDate.getFullYear();
+    var month = daylogViewDate.getMonth(); // 0-indexed
+    document.getElementById("daylog-month-label").textContent = year + " 年 " + (month + 1) + " 月";
+    document.getElementById("daylog-detail").hidden = true;
+    grid.innerHTML = "";
+
+    // 防禦性 try/catch：任何一筆紀錄格式異常都不該讓整個月曆開天窗，
+    // 至少要有東西可看（見 docs/appearancebug.md #1 的空白面板事故）。
+    try {
+      var logsByDate = {};
+      (State.data.dayLogs || []).forEach(function (l) { logsByDate[l.date] = l; });
+
+      var startOffset = new Date(year, month, 1).getDay();
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (var i = 0; i < startOffset; i++) {
+        var blank = document.createElement("div");
+        blank.className = "daylog-cell daylog-cell--pad";
+        grid.appendChild(blank);
+      }
+      for (var d = 1; d <= daysInMonth; d++) {
+        var dateStr = year + "-" + pad2(month + 1) + "-" + pad2(d);
+        var log = logsByDate[dateStr];
+        var cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "daylog-cell" + (log ? " daylog-cell--logged" : "");
+        cell.textContent = String(d);
+        if (log) {
+          cell.style.setProperty("--cell-color", moodColor(log.mood_tag));
+          var meta = Data.MOOD_META[log.mood_tag] || {};
+          cell.title = meta.label || "";
+          cell.addEventListener("click", function (entry) {
+            return function () { showDaylogDetail(entry); };
+          }(log));
+        } else {
+          cell.disabled = true; // 空白日不可互動，也不做任何缺席提示
+        }
+        grid.appendChild(cell);
+      }
+    } catch (err) {
+      console.error("鐵匠鋪：心情日誌月曆渲染失敗", err);
+      grid.innerHTML = '<p class="wall__empty">日曆讀取失敗，重新整理頁面再試一次。</p>';
+    }
+  }
+
+  function showDaylogDetail(log) {
+    var meta = Data.MOOD_META[log.mood_tag] || {};
+    var el = document.getElementById("daylog-detail");
+    el.hidden = false;
+    el.style.borderColor = moodColor(log.mood_tag);
+    el.textContent = log.date + "・" + (meta.emoji || "") + " " + (meta.label || "") + (log.free_text ? "：" + log.free_text : "");
+  }
+
+  function wireDaylog() {
+    document.getElementById("open-daylog").addEventListener("click", function () {
+      daylogViewDate = new Date(); // 每次打開都回到本月
+      renderDaylogWeekdays();
+      renderDaylogCalendar();
+      document.getElementById("daylog-panel").hidden = false;
+    });
+    document.getElementById("daylog-prev").addEventListener("click", function () {
+      daylogViewDate = new Date(daylogViewDate.getFullYear(), daylogViewDate.getMonth() - 1, 1);
+      renderDaylogCalendar();
+    });
+    document.getElementById("daylog-next").addEventListener("click", function () {
+      daylogViewDate = new Date(daylogViewDate.getFullYear(), daylogViewDate.getMonth() + 1, 1);
+      renderDaylogCalendar();
+    });
+    document.getElementById("daylog-close").addEventListener("click", function () {
+      document.getElementById("daylog-panel").hidden = true;
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -686,15 +748,49 @@
   }
 
   // ---------------------------------------------------------------------
-  // 分支（MVP 僅現代分支，點擊顯示未來擴充提示）
+  // 分支切換（§2.3：入口位於左上角，隨時可改，不需確認）
   // ---------------------------------------------------------------------
 
+  function renderBranchMenu() {
+    var wrap = document.getElementById("branch-menu-options");
+    wrap.innerHTML = "";
+    Object.keys(Data.BRANCH_META).forEach(function (key) {
+      var meta = Data.BRANCH_META[key];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "branch-menu__opt" + (key === State.data.settings.current_branch ? " branch-menu__opt--active" : "");
+      btn.textContent = meta.label;
+      btn.addEventListener("click", function () { switchBranch(key); });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function switchBranch(key) {
+    // 只影響「之後」新造武器的 skin 池、展覽牆背景、動物配色風格；
+    // 已存在的任務保留原本 task.branch/skin_id 不受影響（§2.3、§2.4）。
+    State.data.settings.current_branch = key;
+    State.save();
+    applyBranchTheme();
+    closeBranchMenu();
+  }
+
+  function closeBranchMenu() {
+    document.getElementById("branch-menu").hidden = true;
+    document.getElementById("branch-switch").setAttribute("aria-expanded", "false");
+  }
+
   function wireBranch() {
-    document.getElementById("branch-switch").addEventListener("click", function () {
-      var btn = document.getElementById("branch-switch");
-      var original = btn.textContent;
-      btn.textContent = "更多分支即將加入";
-      window.setTimeout(function () { btn.textContent = original; }, 1600);
+    var btn = document.getElementById("branch-switch");
+    var menu = document.getElementById("branch-menu");
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var willOpen = menu.hidden;
+      if (willOpen) renderBranchMenu();
+      menu.hidden = !willOpen;
+      btn.setAttribute("aria-expanded", String(willOpen));
+    });
+    document.addEventListener("click", function (e) {
+      if (!menu.hidden && e.target !== btn && !menu.contains(e.target)) closeBranchMenu();
     });
   }
 
