@@ -4,6 +4,10 @@
 
 > 有幾個內部函式（`UI.startApp`、`UI.openTaskDetail`、`UI.runEpicCompletion` 等）是特地為了這份測試文件才加進 `window.UI` 匯出的（見 `src/js/ui.js` 該處註解），純測試用途，不影響一般使用流程。
 
+> ⚠️ **貼上第一段指令時，Console 會先擋下來**，顯示黃色警告「Don't paste code into the DevTools Console...」並要求輸入 `allow pasting` 才會放行。這是 Chrome 內建的 self-XSS 防護，**任何網站、任何貼上的程式碼都會觸發**，跟這份文件或這個專案的程式碼無關。直接在 Console 打 `allow pasting` 按 Enter，之後同一個 DevTools 分頁內都可以正常貼上執行（關掉 DevTools 重開會重置，要再打一次）。
+>
+> 另外可能會看到一則不相關的紅字錯誤：「Unsafe attempt to load URL file:///.../index.html from frame with URL file:///.../index.html...」——這是瀏覽器對 `file://` 頁面的雜訊（詳見 [`appearancebug.md` #1](./appearancebug.md#1心情日誌面板打開後是空的只有標題和關閉)的調查過程），已確認跟本專案程式碼無關，可以忽略。
+
 ## 0. 開始前：清空 / 檢視資料
 
 ```js

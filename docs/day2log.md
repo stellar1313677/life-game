@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-08-09（追加：test.md 貼上沒反應，是 Chrome 擋的不是程式碼問題）
+
+使用者回報 `test.md` 的指令貼進 Console 沒有用，截圖顯示 Chrome 跳出黃色警告「Don't paste code into the DevTools Console that you don't understand...」要求輸入 `allow pasting` 才放行。
+
+這是 Chrome DevTools 內建的 self-XSS 防護，**任何網站的 Console 貼上任何程式碼都會先擋一次**，防止有人被騙貼惡意程式碼進去，跟 `test.md` 或這個專案的程式碼完全無關——不是 bug，不需要改程式碼。在 `docs/test.md` 開頭加了一段明顯的提醒：先在 Console 打 `allow pasting` 按 Enter 才能貼上執行（同一個 DevTools 分頁內有效，關掉重開要再打一次）。順便也把截圖裡同時出現、之前已經調查過確認無關的那則 `file://` frame 錯誤訊息也一併寫進提醒裡，避免使用者每次看到都以為是新問題。
+
+### 檔案異動
+
+`docs/test.md`（開頭加警告區塊）、這份日誌。
 ## 2026-08-09（新增：docs/test.md，各功能 console 測試指令集）
 
 使用者要測試各項功能，想要一份可以直接貼到瀏覽器 Console 執行的指令集，不用每次都重新走一次完整 UI 流程（開場故事、心情簽到、逐步點表單）。
