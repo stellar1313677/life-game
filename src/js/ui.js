@@ -737,6 +737,14 @@
   window.UI = {
     wireAll: wireAll,
     showOnboardingIfNeeded: showOnboardingIfNeeded,
-    openDefinition: openDefinition
+    openDefinition: openDefinition,
+    // 以下純粹為了讓 docs/test.md 的 console 測試指令能直接呼叫，
+    // 不用每次都用 dispatchEvent 模擬點擊；不影響一般使用流程。
+    startApp: startApp,
+    openTaskDetail: openTaskDetail,
+    closeTaskDetail: closeTaskDetail,
+    openMeltConfirm: openMeltConfirm,
+    runEpicCompletion: runEpicCompletion,
+    runLegacyForge: runLegacyForge
   };
 })();

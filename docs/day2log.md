@@ -4,7 +4,38 @@
 
 ---
 
-## 2026-08-09（新增：狗，用真實圖片做背景動物）
+## 2026-08-09（新增：docs/test.md，各功能 console 測試指令集）
+
+使用者要測試各項功能，想要一份可以直接貼到瀏覽器 Console 執行的指令集，不用每次都重新走一次完整 UI 流程（開場故事、心情簽到、逐步點表單）。
+
+### 先補了幾個測試專用的匯出
+
+寫測試指令時發現 `window.UI` 只匯出了 `wireAll`、`showOnboardingIfNeeded`、`openDefinition`，像 `openTaskDetail`、`runEpicCompletion`、`runLegacyForge`、`openMeltConfirm`、`closeTaskDetail`、`startApp` 這些其實一直都在，只是被關在 `ui.js` 的 IIFE 裡沒有掛到 `window.UI` 上，Console 完全叫不到，只能用 `dispatchEvent` 模擬點擊繞過去（麻煩且脆弱）。`animals.js` 同理，沒有任何辦法跳過 8–30 秒的隨機出場延遲立刻生一隻動物來看。
+
+補了：
+
+- `UI` 新增匯出：`startApp`、`openTaskDetail`、`closeTaskDetail`、`openMeltConfirm`、`runEpicCompletion`、`runLegacyForge`
+- `Animals` 新增匯出：`forceSpawn()`（清掉目前排程的 timer，立刻呼叫一次 `spawnOne()`）
+
+這些函式本來就存在、邏輯完全沒變，只是多掛到 window 物件上，純粹方便 Console 呼叫，不影響一般使用者的操作流程。
+
+### `docs/test.md` 涵蓋範圍
+
+依功能分 14 節：清空/檢視存檔、跳過開場直接進主畫面、捕捉層、定義層升格（含跳過表單的快速版）、EPIC 節點與鍛造儀式、LEGACY 鍛造次數門檻（含一次衝完 50 次看完整成長曲線的快速版）、品質計算公式驗證（對照 SDD §7.3 範例）、EPIC 詞條機率抽樣驗證（對照 §7.5 表格）、奇物詞條、熔毀/靜置、展覽牆密度規則、背景動物、skin 重鑄外觀、設定面板/Spotify/心情日誌回顧、完整重置。
+
+每節盡量給「照真實流程點按鈕」跟「跳過 UI 直接改資料」兩種版本，讓使用者可以選要測 UI 本身還是只測邏輯結果。
+
+### 驗證
+
+- `node --check` 全部 JS 檔語法過關，CSS 大括號平衡
+- 用 Node 個別 `require` 每個模組，逐一確認 `docs/test.md` 裡引用到的每個 `State.*`／`Data.*`／`Rolls.*`／`Render.*`／`Animals.*`／`UI.*` 函式都真的存在於對應的 `window.XXX` 匯出物件裡，沒有打錯字或漏匯出
+- 覆查文件內容時抓到兩個自己寫錯的地方，寫的當下就直接修掉了：
+  - §10（展覽牆密度）原本直接戳 `State.data.dayLogs[dayLogs.length-1].mood_tag`，改成用 `State.addDayLog()`（本來就是「一天一筆」upsert 的正規寫法，不用假設陣列順序）
+  - §12（skin 重鑄外觀）原本沿用 §9 熔毀掉的 `epic` 物件，但重鑄外觀按鈕只在 `COMPLETED` 狀態才會出現，熔毀後的任務不會有——改成建立一個獨立、沒被前面步驟動過的任務
+
+### 檔案異動
+
+`src/js/ui.js`、`src/js/animals.js`（新增匯出）、`docs/test.md`（新增）、這份日誌。
 
 使用者提供 `animal_pictures/dog/dog_1.png` ~ `dog_4.png` 四張真實跑步循環圖片，要求做成一隻會動的狗當背景小動物。這是 SDD §11.2 原始 10 種動物之外新增的第 11 種，也是系統第一次用真實圖片而非程序化 SVG 剪影當動物素材。
 

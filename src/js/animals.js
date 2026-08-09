@@ -175,5 +175,10 @@
     scheduleNext(rand(8, 30)); // 開場後先給一個較短的初次等待
   }
 
-  window.Animals = { init: init, setFocusMode: setFocusMode };
+  window.Animals = {
+    init: init,
+    setFocusMode: setFocusMode,
+    // 測試用：跳過隨機出場間隔，立刻生一隻（見 docs/test.md）
+    forceSpawn: function () { window.clearTimeout(spawnTimer); spawnOne(); }
+  };
 })();
