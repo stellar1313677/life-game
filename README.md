@@ -73,7 +73,8 @@ life-game/
 │   ├── appearancebug.md      # 外觀/渲染類 bug 紀錄
 │   ├── animalsbug.md         # 背景動物系統專屬 bug 紀錄
 │   ├── day1log.md            # 開發日誌（第一天）
-│   └── day2log.md            # 開發日誌（第二天）
+│   ├── day2log.md            # 開發日誌（第二天）
+│   └── review.md             # 程式碼導覽：每個檔案逐段行號 → 功能說明
 └── README.md
 ```
 
